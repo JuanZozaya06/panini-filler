@@ -64,4 +64,16 @@ Abre `http://localhost:4200/`.
 npm run build
 ```
 
+## GitHub Pages
+
+El workflow `.github/workflows/deploy-pages.yml` publica automáticamente al hacer push a `main`.
+
+La URL esperada es:
+
+```text
+https://juanzozaya06.github.io/panini-filler/
+```
+
+En GitHub, configura Pages en `Settings > Pages > Source > GitHub Actions`.
+
 Nota: el entorno actual usa Node 21, que Angular marca como no soportado para producción. Para trabajo estable usa Node 20 LTS o Node 22 LTS.
