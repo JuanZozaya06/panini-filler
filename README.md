@@ -1,13 +1,13 @@
-# Panini Filler
+# Album Manager
 
-Aplicación Angular para llevar el control de un álbum Panini.
+Aplicación Angular para llevar el control de un álbum de barajitas.
 
 ## Funciones
 
 - Vista general de todos los números en círculos de color.
 - Catálogo ordenado por introducción/historia y selecciones.
 - Estados por barajita: `Tengo`, `Repetida` y `Falta`.
-- Toque ciclico por cromo: `Falta`, `Tengo`, `Repetida`.
+- Toque cíclico por barajita: `Falta`, `Tengo`, `Repetida`.
 - Listado automático de faltantes.
 - Listado automático de repetidas con contador de copias.
 - Persistencia en Firebase Firestore.
@@ -25,13 +25,7 @@ Aplicación Angular para llevar el control de un álbum Panini.
 
 Para desarrollo, copia el contenido de `firestore.rules` en Firebase Console > Firestore Database > Reglas > Publicar.
 
-Estas reglas permiten leer y escribir solo dentro de:
-
-```text
-users/Nidito
-```
-
-La app pide usuario y contraseña al entrar. Si el usuario no existe, lo crea con un hash SHA-256 de la contraseña. Luego guarda los cromos en esta ruta de Firestore:
+La app pide usuario y contraseña al entrar. Si el usuario no existe, lo crea con un hash SHA-256 de la contraseña. Luego guarda las barajitas en esta ruta de Firestore:
 
 ```text
 users/{userId}/albums/world-cup-2026/stickers/{numero}
@@ -47,7 +41,7 @@ Cada documento usa esta forma:
 }
 ```
 
-El catálogo local incluye 980 cromos de la edición Standard según LastSticker: 9 de apertura, 48 selecciones con 20 cromos cada una y 11 de historia del Mundial. No incluye Coca-Cola ni Extra/Base.
+El catálogo local incluye 1012 barajitas de la edición Standard según LastSticker: 9 de apertura, 48 selecciones con 20 barajitas cada una, 11 de historia del Mundial y 32 Coca-Cola. No incluye Extra/Base.
 
 ## Desarrollo
 

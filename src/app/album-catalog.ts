@@ -30,55 +30,79 @@ const historyStickers: StickerDefinition[] = Array.from({ length: 11 }, (_, inde
   number: index + 9
 }));
 
+const cocaColaStickers: StickerDefinition[] = [
+  ...Array.from({ length: 12 }, (_, index) => ({
+    id: `CC-US${index + 1}`,
+    code: `CC-US${index + 1}`,
+    section: 'Coca-Cola / USA Canadá',
+    teamCode: 'CC-US',
+    number: index + 1
+  })),
+  ...Array.from({ length: 14 }, (_, index) => ({
+    id: `CC-LAM${index + 1}`,
+    code: `CC-LAM${index + 1}`,
+    section: 'Coca-Cola / Latinoamérica',
+    teamCode: 'CC-LAM',
+    number: index + 1
+  })),
+  ...Array.from({ length: 6 }, (_, index) => ({
+    id: `CC-SRB${index + 1}`,
+    code: `CC-SRB${index + 1}`,
+    section: 'Coca-Cola / Serbia',
+    teamCode: 'CC-SRB',
+    number: index + 1
+  }))
+];
+
 const teams: TeamDefinition[] = [
-  { code: 'MEX', name: 'Mexico' },
-  { code: 'RSA', name: 'South Africa' },
-  { code: 'KOR', name: 'South Korea' },
-  { code: 'CZE', name: 'Czechia' },
-  { code: 'CAN', name: 'Canada' },
-  { code: 'BIH', name: 'Bosnia and Herzegovina' },
+  { code: 'MEX', name: 'México' },
+  { code: 'RSA', name: 'Sudáfrica' },
+  { code: 'KOR', name: 'Corea del Sur' },
+  { code: 'CZE', name: 'Chequia' },
+  { code: 'CAN', name: 'Canadá' },
+  { code: 'BIH', name: 'Bosnia y Herzegovina' },
   { code: 'QAT', name: 'Qatar' },
-  { code: 'SUI', name: 'Switzerland' },
-  { code: 'BRA', name: 'Brazil' },
-  { code: 'MAR', name: 'Morocco' },
-  { code: 'HAI', name: 'Haiti' },
-  { code: 'SCO', name: 'Scotland' },
+  { code: 'SUI', name: 'Suiza' },
+  { code: 'BRA', name: 'Brasil' },
+  { code: 'MAR', name: 'Marruecos' },
+  { code: 'HAI', name: 'Haití' },
+  { code: 'SCO', name: 'Escocia' },
   { code: 'USA', name: 'USA' },
   { code: 'PAR', name: 'Paraguay' },
   { code: 'AUS', name: 'Australia' },
   { code: 'TUR', name: 'Türkiye' },
-  { code: 'GER', name: 'Germany' },
-  { code: 'CUW', name: 'Curacao' },
-  { code: 'CIV', name: 'Ivory Coast' },
+  { code: 'GER', name: 'Alemania' },
+  { code: 'CUW', name: 'Curazao' },
+  { code: 'CIV', name: 'Costa de Marfil' },
   { code: 'ECU', name: 'Ecuador' },
-  { code: 'NED', name: 'Netherlands' },
-  { code: 'JPN', name: 'Japan' },
-  { code: 'SWE', name: 'Sweden' },
-  { code: 'TUN', name: 'Tunisia' },
-  { code: 'BEL', name: 'Belgium' },
-  { code: 'EGY', name: 'Egypt' },
-  { code: 'IRN', name: 'Iran' },
-  { code: 'NZL', name: 'New Zealand' },
-  { code: 'ESP', name: 'Spain' },
-  { code: 'CPV', name: 'Cape Verde' },
-  { code: 'KSA', name: 'Saudi Arabia' },
+  { code: 'NED', name: 'Países Bajos' },
+  { code: 'JPN', name: 'Japón' },
+  { code: 'SWE', name: 'Suecia' },
+  { code: 'TUN', name: 'Túnez' },
+  { code: 'BEL', name: 'Bélgica' },
+  { code: 'EGY', name: 'Egipto' },
+  { code: 'IRN', name: 'Irán' },
+  { code: 'NZL', name: 'Nueva Zelanda' },
+  { code: 'ESP', name: 'España' },
+  { code: 'CPV', name: 'Cabo Verde' },
+  { code: 'KSA', name: 'Arabia Saudita' },
   { code: 'URU', name: 'Uruguay' },
-  { code: 'FRA', name: 'France' },
+  { code: 'FRA', name: 'Francia' },
   { code: 'SEN', name: 'Senegal' },
-  { code: 'IRQ', name: 'Iraq' },
-  { code: 'NOR', name: 'Norway' },
+  { code: 'IRQ', name: 'Irak' },
+  { code: 'NOR', name: 'Noruega' },
   { code: 'ARG', name: 'Argentina' },
-  { code: 'ALG', name: 'Algeria' },
+  { code: 'ALG', name: 'Argelia' },
   { code: 'AUT', name: 'Austria' },
-  { code: 'JOR', name: 'Jordan' },
+  { code: 'JOR', name: 'Jordania' },
   { code: 'POR', name: 'Portugal' },
-  { code: 'COD', name: 'Congo DR' },
-  { code: 'UZB', name: 'Uzbekistan' },
+  { code: 'COD', name: 'RD del Congo' },
+  { code: 'UZB', name: 'Uzbekistán' },
   { code: 'COL', name: 'Colombia' },
-  { code: 'ENG', name: 'England' },
-  { code: 'CRO', name: 'Croatia' },
+  { code: 'ENG', name: 'Inglaterra' },
+  { code: 'CRO', name: 'Croacia' },
   { code: 'GHA', name: 'Ghana' },
-  { code: 'PAN', name: 'Panama' }
+  { code: 'PAN', name: 'Panamá' }
 ];
 
 export const ALBUM_CATALOG: StickerDefinition[] = [
@@ -92,5 +116,6 @@ export const ALBUM_CATALOG: StickerDefinition[] = [
       number: index + 1
     }))
   ),
-  ...historyStickers
+  ...historyStickers,
+  ...cocaColaStickers
 ];

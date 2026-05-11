@@ -17,14 +17,14 @@ describe('AppComponent', () => {
   it('should start with all stickers missing', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.stickers().length).toBe(980);
-    expect(app.missingStickers().length).toBe(980);
+    expect(app.stickers().length).toBe(1012);
+    expect(app.missingStickers().length).toBe(1012);
   });
 
   it('should render the login title first', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Entrar al album');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Gestiona tu álbum');
   });
 });

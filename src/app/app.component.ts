@@ -57,8 +57,8 @@ export class AppComponent implements OnDestroy {
   private stickersSubscription?: Subscription;
 
   readonly statusLabels = STATUS_LABELS;
-  readonly syncState = signal(environment.firebase.enabled ? 'Esperando usuario' : 'Firebase sin configurar');
-  readonly loginName = signal('Nidito');
+  readonly syncState = signal(environment.firebase.enabled ? '' : 'Firebase sin configurar');
+  readonly loginName = signal('');
   readonly loginPassword = signal('');
   readonly currentUserId = signal('');
   readonly loginError = signal('');
@@ -67,12 +67,8 @@ export class AppComponent implements OnDestroy {
   readonly globalQuery = signal('');
   readonly missingQuery = signal('');
   readonly duplicateQuery = signal('');
-  readonly collapsedPanels = signal<Record<PanelId, boolean>>({
-    global: true,
-    sections: true,
-    missing: false,
-    duplicates: false
-  });
+  readonly copyFeedback = signal('');
+  readonly activePanel = signal<PanelId>('global');
 
   readonly stickers = signal<Sticker[]>(this.buildInitialStickers());
 
@@ -124,7 +120,7 @@ export class AppComponent implements OnDestroy {
 
   async login(): Promise<void> {
     if (!this.firestore) {
-      this.loginError.set('La conexion no esta configurada.');
+      this.loginError.set('La conexión no está configurada.');
       return;
     }
 
@@ -136,13 +132,13 @@ export class AppComponent implements OnDestroy {
     }
 
     if (!this.loginPassword()) {
-      this.loginError.set('Escribe una contrasena.');
+      this.loginError.set('Escribe una contraseña.');
       return;
     }
 
     this.loginError.set('');
     this.isLoggingIn.set(true);
-    this.syncState.set('Entrando...');
+    this.syncState.set('');
 
     const isAuthenticated = await this.authenticateUser(userId, this.loginPassword()).catch((error) => {
       console.error(error);
@@ -162,6 +158,7 @@ export class AppComponent implements OnDestroy {
     this.globalQuery.set('');
     this.missingQuery.set('');
     this.duplicateQuery.set('');
+    this.copyFeedback.set('');
     this.loginPassword.set('');
     this.stickersSubscription?.unsubscribe();
 
@@ -185,7 +182,7 @@ export class AppComponent implements OnDestroy {
         error: (error) => {
           console.error(error);
           this.loginError.set(this.readableError(error));
-          this.syncState.set('No se pudieron cargar los cromos');
+          this.syncState.set('No se pudieron cargar las barajitas');
         }
       });
   }
@@ -194,19 +191,22 @@ export class AppComponent implements OnDestroy {
     this.stickersSubscription?.unsubscribe();
     this.currentUserId.set('');
     this.loginPassword.set('');
-    this.syncState.set(environment.firebase.enabled ? 'Esperando usuario' : 'Conexion sin configurar');
+    this.syncState.set(environment.firebase.enabled ? '' : 'Conexión sin configurar');
     this.stickers.set(this.buildInitialStickers());
   }
 
   async cycleStickerStatus(sticker: Sticker): Promise<void> {
-    const nextStatus: StickerStatus =
-      sticker.status === 'missing'
-        ? 'owned'
-        : sticker.status === 'owned'
-          ? 'duplicate'
-          : 'missing';
+    if (sticker.status === 'missing') {
+      await this.setStickerStatus(sticker, 'owned');
+      return;
+    }
 
-    await this.setStickerStatus(sticker, nextStatus, nextStatus === 'duplicate' ? 1 : 0);
+    if (sticker.status === 'owned') {
+      await this.setStickerStatus(sticker, 'duplicate', 1);
+      return;
+    }
+
+    await this.incrementDuplicate(sticker);
   }
 
   async setStickerStatus(sticker: Sticker, status: StickerStatus, duplicateCount?: number): Promise<void> {
@@ -241,13 +241,17 @@ export class AppComponent implements OnDestroy {
     }
   }
 
-  async incrementDuplicate(sticker: Sticker): Promise<void> {
+  async incrementDuplicate(sticker: Sticker, event?: Event): Promise<void> {
+    event?.stopPropagation();
     await this.setStickerStatus(sticker, 'duplicate', sticker.duplicateCount + 1);
   }
 
-  async removeDuplicate(sticker: Sticker, event: Event): Promise<void> {
+  async decrementDuplicate(sticker: Sticker, event: Event): Promise<void> {
     event.stopPropagation();
-    await this.setStickerStatus(sticker, 'owned', 0);
+    const nextCount = Math.max(sticker.duplicateCount - 1, 0);
+    const nextStatus: StickerStatus = nextCount === 0 ? 'owned' : 'duplicate';
+
+    await this.setStickerStatus(sticker, nextStatus, nextCount);
   }
 
   statusClass(status: StickerStatus): string {
@@ -263,14 +267,31 @@ export class AppComponent implements OnDestroy {
   }
 
   togglePanel(panel: PanelId): void {
-    this.collapsedPanels.update((panels) => ({
-      ...panels,
-      [panel]: !panels[panel]
-    }));
+    this.activePanel.set(panel);
+    this.copyFeedback.set('');
   }
 
   isCollapsed(panel: PanelId): boolean {
-    return this.collapsedPanels()[panel];
+    return this.activePanel() !== panel;
+  }
+
+  async copyStickerCodes(type: 'missing' | 'duplicates'): Promise<void> {
+    const stickers = type === 'missing' ? this.missingStickers() : this.duplicateStickers();
+    const text = stickers.map((sticker) => sticker.code).join(' ');
+    const label = type === 'missing' ? 'faltantes' : 'repetidas';
+
+    if (!text) {
+      this.copyFeedback.set(`No hay barajitas ${label} para copiar.`);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copyFeedback.set(`Listado de barajitas ${label} copiado al portapapeles.`);
+    } catch (error) {
+      console.error(error);
+      this.copyFeedback.set('No se pudo copiar el listado al portapapeles.');
+    }
   }
 
   private filterStickers(stickers: Sticker[], query: string): Sticker[] {
@@ -298,8 +319,8 @@ export class AppComponent implements OnDestroy {
       const user = userSnapshot.data() as StoredUser;
 
       if (user.passwordHash && user.passwordHash !== passwordHash) {
-        this.loginError.set('Contrasena incorrecta.');
-        this.syncState.set('Esperando usuario');
+        this.loginError.set('La combinación de usuario y contraseña no coincide.');
+        this.syncState.set('');
         return false;
       }
     }
@@ -331,7 +352,7 @@ export class AppComponent implements OnDestroy {
       doc(this.firestore, `users/${userId}/albums/${this.albumId}`),
       {
         id: this.albumId,
-        name: 'Panini World Cup 2026',
+        name: 'Album Manager 2026',
         totalStickers: ALBUM_CATALOG.length,
         updatedAt: now
       },
@@ -355,7 +376,7 @@ export class AppComponent implements OnDestroy {
     }
 
     if (message.includes('unavailable') || message.includes('network')) {
-      return 'No hay conexion. Intenta de nuevo.';
+      return 'No hay conexión. Intenta de nuevo.';
     }
 
     return 'No se pudo completar la accion. Intenta de nuevo.';
