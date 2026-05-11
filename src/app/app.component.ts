@@ -254,6 +254,11 @@ export class AppComponent implements OnDestroy {
     await this.setStickerStatus(sticker, nextStatus, nextCount);
   }
 
+  async markStickerMissing(sticker: Sticker, event: Event): Promise<void> {
+    event.stopPropagation();
+    await this.setStickerStatus(sticker, 'missing', 0);
+  }
+
   statusClass(status: StickerStatus): string {
     return `status-${status}`;
   }
