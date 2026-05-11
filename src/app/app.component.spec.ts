@@ -27,4 +27,13 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Gestiona tu álbum');
   });
+
+  it('should normalize usernames to lowercase firestore-safe ids', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance as unknown as {
+      normalizeUserId: (value: string) => string;
+    };
+
+    expect(app.normalizeUserId(' Nidito/Profile#1 ')).toBe('nidito-profile-1');
+  });
 });

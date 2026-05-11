@@ -365,7 +365,7 @@ export class AppComponent implements OnDestroy {
   }
 
   private normalizeUserId(value: string): string {
-    return value.trim().replace(/[/.#[\]]/g, '-');
+    return value.trim().toLowerCase().replace(/[/.#[\]]/g, '-');
   }
 
   private readableError(error: unknown): string {

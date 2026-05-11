@@ -1,22 +1,25 @@
 <main class="shell">
   <section class="login-panel" *ngIf="!currentUserId()">
-    <img class="login-logo" src="worldcup.png" alt="World Cup 2026">
+    <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
     <div class="login-copy">
       <h1>Gestiona tu álbum</h1>
-      <p class="subtitle">Ingresa o regístrate con tu usuario para cargar tus barajitas.</p>
+      <p class="subtitle">
+        Ingresa o regístrate con tu usuario para cargar tus barajitas.
+      </p>
     </div>
 
     <form class="login-form" (ngSubmit)="login()">
       <label for="loginName">Usuario</label>
       <input
         id="loginName"
+        class="username-input"
         name="loginName"
         type="text"
         [ngModel]="loginName()"
         (ngModelChange)="loginName.set($event)"
         autocomplete="username"
         [disabled]="isLoggingIn()"
-      >
+      />
 
       <label for="loginPassword">Contraseña</label>
       <input
@@ -27,11 +30,11 @@
         (ngModelChange)="loginPassword.set($event)"
         autocomplete="current-password"
         [disabled]="isLoggingIn()"
-      >
+      />
 
       <button type="submit" [disabled]="isLoggingIn()">
         <span class="spinner" *ngIf="isLoggingIn()" aria-hidden="true"></span>
-        {{ isLoggingIn() ? 'Entrando' : 'Entrar' }}
+        {{ isLoggingIn() ? "Entrando" : "Entrar" }}
       </button>
       <p class="login-error" *ngIf="loginError()">{{ loginError() }}</p>
     </form>
@@ -43,7 +46,13 @@
         <h1>Mi álbum 2026</h1>
         <div class="user-chip">
           <span>{{ currentUserId() }}</span>
-          <button type="button" class="logout-icon-button" aria-label="Cerrar sesión" title="Cerrar sesión" (click)="logout()">
+          <button
+            type="button"
+            class="logout-icon-button"
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            (click)="logout()"
+          >
             <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
           </button>
         </div>
@@ -59,7 +68,9 @@
           <span>completado</span>
         </div>
         <div>
-          <strong>{{ duplicateCopies() }} ({{ duplicateStickers().length }})</strong>
+          <strong
+            >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</strong
+          >
           <span>repetidas</span>
         </div>
       </div>
@@ -69,21 +80,39 @@
 
     <section class="dashboard">
       <nav class="panel-tabs" aria-label="Vistas del álbum">
-        <button type="button" [class.active]="activePanel() === 'global'" (click)="togglePanel('global')">
+        <button
+          type="button"
+          [class.active]="activePanel() === 'global'"
+          (click)="togglePanel('global')"
+        >
           <strong>Global</strong>
           <span>{{ ownedStickers().length }} tengo</span>
         </button>
-        <button type="button" [class.active]="activePanel() === 'sections'" (click)="togglePanel('sections')">
+        <button
+          type="button"
+          [class.active]="activePanel() === 'sections'"
+          (click)="togglePanel('sections')"
+        >
           <strong>Categorías</strong>
           <span>{{ sections().length }} grupos</span>
         </button>
-        <button type="button" [class.active]="activePanel() === 'missing'" (click)="togglePanel('missing')">
+        <button
+          type="button"
+          [class.active]="activePanel() === 'missing'"
+          (click)="togglePanel('missing')"
+        >
           <strong>Me faltan</strong>
           <span>{{ missingStickers().length }} barajitas</span>
         </button>
-        <button type="button" [class.active]="activePanel() === 'duplicates'" (click)="togglePanel('duplicates')">
+        <button
+          type="button"
+          [class.active]="activePanel() === 'duplicates'"
+          (click)="togglePanel('duplicates')"
+        >
           <strong>Repetidas</strong>
-          <span>{{ duplicateCopies() }} ({{ duplicateStickers().length }})</span>
+          <span
+            >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</span
+          >
         </button>
       </nav>
 
@@ -92,7 +121,11 @@
           <header class="active-panel-header">
             <div>
               <h2>Vista global</h2>
-              <p>{{ ownedStickers().length }} tengo | {{ duplicateCopies() }} ({{ duplicateStickers().length }}) repetidas | {{ missingStickers().length }} faltan</p>
+              <p>
+                {{ ownedStickers().length }} tengo | {{ duplicateCopies() }} ({{
+                  duplicateStickers().length
+                }}) repetidas | {{ missingStickers().length }} faltan
+              </p>
             </div>
             <div class="legend">
               <span class="dot status-owned"></span>Tengo
@@ -108,19 +141,36 @@
             [ngModel]="globalQuery()"
             (ngModelChange)="globalQuery.set($event)"
             autocomplete="off"
-          >
+          />
 
-          <div class="scroll-grid global-grid" aria-label="Todas las barajitas del álbum">
+          <div
+            class="scroll-grid global-grid"
+            aria-label="Todas las barajitas del álbum"
+          >
             <button
               type="button"
               class="sticker-dot"
-              *ngFor="let sticker of filteredGlobalStickers(); trackBy: trackStickerId"
+              *ngFor="
+                let sticker of filteredGlobalStickers();
+                trackBy: trackStickerId
+              "
               [class]="statusClass(sticker.status)"
-              [attr.aria-label]="'Barajita ' + sticker.code + ' de ' + sticker.section + ': ' + statusLabels[sticker.status]"
+              [attr.aria-label]="
+                'Barajita ' +
+                sticker.code +
+                ' de ' +
+                sticker.section +
+                ': ' +
+                statusLabels[sticker.status]
+              "
               (click)="cycleStickerStatus(sticker)"
             >
               {{ sticker.code }}
-              <span class="sticker-count-badge" *ngIf="sticker.status === 'duplicate'">x{{ sticker.duplicateCount }}</span>
+              <span
+                class="sticker-count-badge"
+                *ngIf="sticker.status === 'duplicate'"
+                >x{{ sticker.duplicateCount }}</span
+              >
               <span
                 class="decrement-duplicate-badge"
                 *ngIf="sticker.status === 'duplicate'"
@@ -130,7 +180,9 @@
                 [attr.aria-label]="'Restar repetida de ' + sticker.code"
                 (click)="decrementDuplicate(sticker, $event)"
                 (keydown.enter)="decrementDuplicate(sticker, $event)"
-                (keydown.space)="$event.preventDefault(); decrementDuplicate(sticker, $event)"
+                (keydown.space)="
+                  $event.preventDefault(); decrementDuplicate(sticker, $event)
+                "
               >
                 <i class="fa-solid fa-minus" aria-hidden="true"></i>
               </span>
@@ -142,7 +194,10 @@
           <header class="active-panel-header">
             <div>
               <h2>Por país/categoría</h2>
-              <p>{{ sections().length }} grupos | {{ completedPercent() }}% completado</p>
+              <p>
+                {{ sections().length }} grupos | {{ completedPercent() }}%
+                completado
+              </p>
             </div>
             <div class="legend">
               <span class="dot status-owned"></span>Tengo
@@ -151,12 +206,20 @@
             </div>
           </header>
 
-          <div class="section-grid scroll-area" aria-label="Números de barajitas por país o categoría">
-            <section class="album-section" *ngFor="let section of sections(); trackBy: trackSection">
+          <div
+            class="section-grid scroll-area"
+            aria-label="Números de barajitas por país o categoría"
+          >
+            <section
+              class="album-section"
+              *ngFor="let section of sections(); trackBy: trackSection"
+            >
               <div class="section-title">
                 <strong>
                   {{ section.name }}
-                  <span>- {{ section.owned }}/{{ section.stickers.length }}</span>
+                  <span
+                    >- {{ section.owned }}/{{ section.stickers.length }}</span
+                  >
                 </strong>
               </div>
 
@@ -164,13 +227,27 @@
                 <button
                   type="button"
                   class="sticker-dot"
-                  *ngFor="let sticker of section.stickers; trackBy: trackStickerId"
+                  *ngFor="
+                    let sticker of section.stickers;
+                    trackBy: trackStickerId
+                  "
                   [class]="statusClass(sticker.status)"
-                  [attr.aria-label]="'Barajita ' + sticker.code + ' de ' + sticker.section + ': ' + statusLabels[sticker.status]"
+                  [attr.aria-label]="
+                    'Barajita ' +
+                    sticker.code +
+                    ' de ' +
+                    sticker.section +
+                    ': ' +
+                    statusLabels[sticker.status]
+                  "
                   (click)="cycleStickerStatus(sticker)"
                 >
                   {{ sticker.code }}
-                  <span class="sticker-count-badge" *ngIf="sticker.status === 'duplicate'">x{{ sticker.duplicateCount }}</span>
+                  <span
+                    class="sticker-count-badge"
+                    *ngIf="sticker.status === 'duplicate'"
+                    >x{{ sticker.duplicateCount }}</span
+                  >
                   <span
                     class="decrement-duplicate-badge"
                     *ngIf="sticker.status === 'duplicate'"
@@ -180,7 +257,10 @@
                     [attr.aria-label]="'Restar repetida de ' + sticker.code"
                     (click)="decrementDuplicate(sticker, $event)"
                     (keydown.enter)="decrementDuplicate(sticker, $event)"
-                    (keydown.space)="$event.preventDefault(); decrementDuplicate(sticker, $event)"
+                    (keydown.space)="
+                      $event.preventDefault();
+                      decrementDuplicate(sticker, $event)
+                    "
                   >
                     <i class="fa-solid fa-minus" aria-hidden="true"></i>
                   </span>
@@ -194,7 +274,10 @@
           <header class="active-panel-header">
             <div>
               <h2>Me faltan</h2>
-              <p>{{ missingStickers().length }} barajitas | {{ filteredMissingStickers().length }} visibles</p>
+              <p>
+                {{ missingStickers().length }} barajitas |
+                {{ filteredMissingStickers().length }} visibles
+              </p>
             </div>
           </header>
 
@@ -206,7 +289,7 @@
               [ngModel]="missingQuery()"
               (ngModelChange)="missingQuery.set($event)"
               autocomplete="off"
-            >
+            />
             <button
               type="button"
               class="copy-list-button"
@@ -218,14 +301,27 @@
               <i class="fa-solid fa-download" aria-hidden="true"></i>
             </button>
           </div>
-          <p class="copy-feedback" *ngIf="copyFeedback() && activePanel() === 'missing'">{{ copyFeedback() }}</p>
+          <p
+            class="copy-feedback"
+            *ngIf="copyFeedback() && activePanel() === 'missing'"
+          >
+            {{ copyFeedback() }}
+          </p>
 
-          <div class="scroll-grid missing-dot-list" *ngIf="filteredMissingStickers().length; else noMissing">
+          <div
+            class="scroll-grid missing-dot-list"
+            *ngIf="filteredMissingStickers().length; else noMissing"
+          >
             <button
               type="button"
               class="sticker-dot status-missing"
-              *ngFor="let sticker of filteredMissingStickers(); trackBy: trackStickerId"
-              [attr.aria-label]="'Marcar como tengo ' + sticker.code + ' de ' + sticker.section"
+              *ngFor="
+                let sticker of filteredMissingStickers();
+                trackBy: trackStickerId
+              "
+              [attr.aria-label]="
+                'Marcar como tengo ' + sticker.code + ' de ' + sticker.section
+              "
               (click)="setStickerStatus(sticker, 'owned')"
             >
               {{ sticker.code }}
@@ -252,7 +348,7 @@
               [ngModel]="duplicateQuery()"
               (ngModelChange)="duplicateQuery.set($event)"
               autocomplete="off"
-            >
+            />
             <button
               type="button"
               class="copy-list-button"
@@ -264,20 +360,33 @@
               <i class="fa-solid fa-download" aria-hidden="true"></i>
             </button>
           </div>
-          <p class="copy-feedback" *ngIf="copyFeedback() && activePanel() === 'duplicates'">{{ copyFeedback() }}</p>
+          <p
+            class="copy-feedback"
+            *ngIf="copyFeedback() && activePanel() === 'duplicates'"
+          >
+            {{ copyFeedback() }}
+          </p>
 
-          <div class="scroll-grid duplicate-dot-list" *ngIf="filteredDuplicateStickers().length; else noDuplicates">
+          <div
+            class="scroll-grid duplicate-dot-list"
+            *ngIf="filteredDuplicateStickers().length; else noDuplicates"
+          >
             <div
               class="duplicate-dot-item"
               role="button"
               tabindex="0"
-              *ngFor="let sticker of filteredDuplicateStickers(); trackBy: trackStickerId"
+              *ngFor="
+                let sticker of filteredDuplicateStickers();
+                trackBy: trackStickerId
+              "
               (click)="incrementDuplicate(sticker)"
               (keydown.enter)="incrementDuplicate(sticker)"
             >
               <span class="sticker-dot status-duplicate duplicate-sticker-dot">
                 {{ sticker.code }}
-                <span class="duplicate-count-badge">x{{ sticker.duplicateCount }}</span>
+                <span class="duplicate-count-badge"
+                  >x{{ sticker.duplicateCount }}</span
+                >
               </span>
               <button
                 type="button"
