@@ -1,31 +1,40 @@
 # Album Manager
 
-Aplicación Angular para llevar el control de un álbum de barajitas.
+Aplicacion Angular para llevar el control de un album de barajitas.
 
 ## Funciones
 
-- Vista general de todos los números en círculos de color.
-- Catálogo ordenado por introducción/historia y selecciones.
+- Vista `Mi album` organizada por pais/categoria.
 - Estados por barajita: `Tengo`, `Repetida` y `Falta`.
-- Toque cíclico por barajita: `Falta`, `Tengo`, `Repetida`.
-- Listado automático de faltantes.
-- Listado automático de repetidas con contador de copias.
+- Toque ciclico por barajita: `Falta`, `Tengo`, `Repetida`.
+- Listados automaticos de `Me faltan` y `Repetidas`.
+- Copia de listas agrupadas por seleccion, con numeros separados por coma.
+- Enlace compartible de solo lectura para que otra persona vea faltantes y repetidas sin iniciar sesion.
 - Persistencia en Firebase Firestore.
+
+## Catalogo
+
+El catalogo local incluye 994 barajitas de la edicion Standard segun LastSticker:
+
+- 9 de apertura.
+- 48 selecciones con 20 barajitas cada una.
+- 11 de historia del Mundial.
+- 14 Coca-Cola Latinoamerica.
+
+No incluye Extra/Base.
 
 ## Configurar Firebase
 
 1. Crea un proyecto en Firebase.
 2. Activa Firestore Database.
-3. Crea una app web en Firebase y copia su configuración.
+3. Crea una app web en Firebase y copia su configuracion.
 4. Edita `src/environments/environment.ts`.
 5. Cambia `firebase.enabled` a `true`.
 6. Reemplaza los valores `TU_*` por los valores reales de tu proyecto.
 
-## Reglas de Firestore
+## Datos y acceso
 
-Para desarrollo, copia el contenido de `firestore.rules` en Firebase Console > Firestore Database > Reglas > Publicar.
-
-La app pide usuario y contraseña al entrar. Si el usuario no existe, lo crea con un hash SHA-256 de la contraseña. Luego guarda las barajitas en esta ruta de Firestore:
+La app pide usuario y contrasena al entrar. Si el usuario no existe, lo crea con un hash SHA-256 de la contrasena. Luego guarda las barajitas en esta ruta de Firestore:
 
 ```text
 users/{userId}/albums/world-cup-2026/stickers/{numero}
@@ -41,7 +50,17 @@ Cada documento usa esta forma:
 }
 ```
 
-El catálogo local incluye 994 barajitas de la edición Standard según LastSticker: 9 de apertura, 48 selecciones con 20 barajitas cada una, 11 de historia del Mundial y 14 Coca-Cola Latinoamérica. No incluye Extra/Base.
+El enlace para compartir usa esta forma:
+
+```text
+/?share={userId}
+```
+
+La vista compartida muestra solo lectura de faltantes y repetidas. Las reglas incluidas en `firestore.rules` son abiertas para desarrollo; antes de publicar una version real conviene endurecerlas y separar lectura publica de escritura privada.
+
+## Reglas de Firestore
+
+Para desarrollo, copia el contenido de `firestore.rules` en Firebase Console > Firestore Database > Reglas > Publicar.
 
 ## Desarrollo
 
@@ -60,7 +79,7 @@ npm run build
 
 ## GitHub Pages
 
-El workflow `.github/workflows/deploy-pages.yml` publica automáticamente al hacer push a `main`.
+El workflow `.github/workflows/deploy-pages.yml` publica automaticamente al hacer push a `main`.
 
 La URL esperada es:
 
@@ -70,4 +89,4 @@ https://juanzozaya06.github.io/panini-filler/
 
 En GitHub, configura Pages en `Settings > Pages > Source > GitHub Actions`.
 
-Nota: el entorno actual usa Node 21, que Angular marca como no soportado para producción. Para trabajo estable usa Node 20 LTS o Node 22 LTS.
+Nota: el entorno actual usa Node 21, que Angular marca como no soportado para produccion. Para trabajo estable usa Node 20 LTS o Node 22 LTS.
