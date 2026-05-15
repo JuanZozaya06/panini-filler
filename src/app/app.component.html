@@ -1,12 +1,17 @@
 <main class="shell" [class.shared-shell]="isSharedView()">
   <section class="shared-panel" *ngIf="isSharedView(); else privateAlbum">
-    <header class="shared-header">
+    <button
+      type="button"
+      class="shared-header"
+      aria-label="Volver al inicio de sesión"
+      title="Volver al inicio de sesión"
+      (click)="returnToLogin()"
+    >
       <img class="shared-logo" src="worldcup.png" alt="World Cup 2026" />
       <div>
         <h1>Álbum de {{ sharedUserId() }}</h1>
-        <p class="subtitle">Vista compartida de solo lectura</p>
       </div>
-    </header>
+    </button>
 
     <div class="summary shared-summary" aria-label="Resumen del álbum compartido">
       <div>

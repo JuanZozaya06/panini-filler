@@ -378,6 +378,15 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  returnToLogin(): void {
+    this.stickersSubscription?.unsubscribe();
+    this.sharedUserId.set('');
+    this.stickers.set(this.buildInitialStickers());
+    this.loginError.set('');
+    this.syncState.set(environment.firebase.enabled ? '' : 'Firebase sin configurar');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   private filterStickers(stickers: Sticker[], query: string): Sticker[] {
     const normalizedQuery = query.trim().toLowerCase();
 
