@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Firestore,
@@ -14,7 +14,7 @@ import { environment } from '../environments/environment';
 import { ALBUM_CATALOG, StickerDefinition } from './album-catalog';
 
 type StickerStatus = 'missing' | 'owned' | 'duplicate';
-type PanelId = 'global' | 'sections' | 'missing' | 'duplicates';
+type PanelId = 'album' | 'missing' | 'duplicates';
 
 interface Sticker {
   id: string;
@@ -38,10 +38,67 @@ interface StoredUser {
   passwordHash?: string;
 }
 
+interface StickerGroup {
+  label: string;
+  numbers: number[];
+}
+
 const STATUS_LABELS: Record<StickerStatus, string> = {
   missing: 'Falta',
   owned: 'Tengo',
   duplicate: 'Repetida'
+};
+
+const TEAM_EMOJIS: Record<string, string> = {
+  MEX: '🇲🇽',
+  RSA: '🇿🇦',
+  KOR: '🇰🇷',
+  CZE: '🇨🇿',
+  CAN: '🇨🇦',
+  BIH: '🇧🇦',
+  QAT: '🇶🇦',
+  SUI: '🇨🇭',
+  BRA: '🇧🇷',
+  MAR: '🇲🇦',
+  HAI: '🇭🇹',
+  SCO: '🏴',
+  USA: '🇺🇸',
+  PAR: '🇵🇾',
+  AUS: '🇦🇺',
+  TUR: '🇹🇷',
+  GER: '🇩🇪',
+  CUW: '🇨🇼',
+  CIV: '🇨🇮',
+  ECU: '🇪🇨',
+  NED: '🇳🇱',
+  JPN: '🇯🇵',
+  SWE: '🇸🇪',
+  TUN: '🇹🇳',
+  BEL: '🇧🇪',
+  EGY: '🇪🇬',
+  IRN: '🇮🇷',
+  NZL: '🇳🇿',
+  ESP: '🇪🇸',
+  CPV: '🇨🇻',
+  KSA: '🇸🇦',
+  URU: '🇺🇾',
+  FRA: '🇫🇷',
+  SEN: '🇸🇳',
+  IRQ: '🇮🇶',
+  NOR: '🇳🇴',
+  ARG: '🇦🇷',
+  ALG: '🇩🇿',
+  AUT: '🇦🇹',
+  JOR: '🇯🇴',
+  POR: '🇵🇹',
+  COD: '🇨🇩',
+  UZB: '🇺🇿',
+  COL: '🇨🇴',
+  ENG: '🏴',
+  CRO: '🇭🇷',
+  GHA: '🇬🇭',
+  PAN: '🇵🇦',
+  'CC-LAM': '🌎'
 };
 
 @Component({
@@ -51,7 +108,7 @@ const STATUS_LABELS: Record<StickerStatus, string> = {
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
   private readonly albumId = 'world-cup-2026';
   private stickersSubscription?: Subscription;
@@ -61,14 +118,17 @@ export class AppComponent implements OnDestroy {
   readonly loginName = signal('');
   readonly loginPassword = signal('');
   readonly currentUserId = signal('');
+  readonly sharedUserId = signal('');
   readonly loginError = signal('');
   readonly isLoggingIn = signal(false);
   readonly isSaving = signal(false);
-  readonly globalQuery = signal('');
+  readonly isLoadingSharedAlbum = signal(false);
   readonly missingQuery = signal('');
   readonly duplicateQuery = signal('');
   readonly copyFeedback = signal('');
-  readonly activePanel = signal<PanelId>('global');
+  readonly shareFeedback = signal('');
+  readonly activePanel = signal<PanelId>('album');
+  readonly isSharedView = computed(() => !!this.sharedUserId());
 
   readonly stickers = signal<Sticker[]>(this.buildInitialStickers());
 
@@ -81,9 +141,6 @@ export class AppComponent implements OnDestroy {
   readonly duplicateStickers = computed(() =>
     this.stickers().filter((sticker) => sticker.status === 'duplicate')
   );
-  readonly filteredGlobalStickers = computed(() =>
-    this.filterStickers(this.stickers(), this.globalQuery())
-  );
   readonly filteredMissingStickers = computed(() =>
     this.filterStickers(this.missingStickers(), this.missingQuery())
   );
@@ -95,6 +152,18 @@ export class AppComponent implements OnDestroy {
   );
   readonly completedPercent = computed(() =>
     Math.round((this.ownedStickers().length / this.stickers().length) * 100)
+  );
+  readonly formattedMissingList = computed(() =>
+    this.formatStickerList('Me faltan', this.missingStickers())
+  );
+  readonly formattedDuplicateList = computed(() =>
+    this.formatStickerList('Repetidas', this.duplicateStickers())
+  );
+  readonly sharedMissingGroups = computed(() =>
+    this.groupStickerRows(this.missingStickers(), false)
+  );
+  readonly sharedDuplicateGroups = computed(() =>
+    this.groupStickerRows(this.duplicateStickers(), false)
   );
   readonly sections = computed(() => {
     const grouped = new Map<string, Sticker[]>();
@@ -113,6 +182,15 @@ export class AppComponent implements OnDestroy {
       missing: stickers.filter((sticker) => sticker.status === 'missing').length
     }));
   });
+
+  ngOnInit(): void {
+    const sharedUserId = this.readSharedUserId();
+
+    if (sharedUserId) {
+      this.sharedUserId.set(sharedUserId);
+      this.loadSharedAlbum(sharedUserId);
+    }
+  }
 
   ngOnDestroy(): void {
     this.stickersSubscription?.unsubscribe();
@@ -155,36 +233,13 @@ export class AppComponent implements OnDestroy {
 
     this.currentUserId.set(userId);
     this.stickers.set(this.buildInitialStickers());
-    this.globalQuery.set('');
     this.missingQuery.set('');
     this.duplicateQuery.set('');
     this.copyFeedback.set('');
     this.loginPassword.set('');
     this.stickersSubscription?.unsubscribe();
 
-    this.stickersSubscription = collectionData(collection(this.firestore, this.stickersPath(userId)), { idField: 'id' })
-      .subscribe({
-        next: (storedStickers) => {
-          const byId = new Map(
-            (storedStickers as StoredSticker[]).map((sticker) => [sticker.id, sticker])
-          );
-
-          this.stickers.update((stickers) =>
-            stickers.map((sticker) => ({
-              ...sticker,
-              status: byId.get(sticker.id)?.status ?? 'missing',
-              duplicateCount: byId.get(sticker.id)?.duplicateCount ?? 0,
-              updatedAt: byId.get(sticker.id)?.updatedAt
-            }))
-          );
-          this.syncState.set(`Usuario: ${userId}`);
-        },
-        error: (error) => {
-          console.error(error);
-          this.loginError.set(this.readableError(error));
-          this.syncState.set('No se pudieron cargar las barajitas');
-        }
-      });
+    this.subscribeToAlbum(userId, `Usuario: ${userId}`);
   }
 
   logout(): void {
@@ -271,6 +326,10 @@ export class AppComponent implements OnDestroy {
     return section.name;
   }
 
+  trackStickerGroup(_: number, group: StickerGroup): string {
+    return group.label;
+  }
+
   togglePanel(panel: PanelId): void {
     this.activePanel.set(panel);
     this.copyFeedback.set('');
@@ -282,7 +341,8 @@ export class AppComponent implements OnDestroy {
 
   async copyStickerCodes(type: 'missing' | 'duplicates'): Promise<void> {
     const stickers = type === 'missing' ? this.missingStickers() : this.duplicateStickers();
-    const text = stickers.map((sticker) => sticker.code).join(' ');
+    const title = type === 'missing' ? 'Me faltan' : 'Repetidas';
+    const text = this.formatStickerList(title, stickers);
     const label = type === 'missing' ? 'faltantes' : 'repetidas';
 
     if (!text) {
@@ -299,6 +359,25 @@ export class AppComponent implements OnDestroy {
     }
   }
 
+  async copyShareLink(): Promise<void> {
+    const userId = this.currentUserId();
+
+    if (!userId) {
+      return;
+    }
+
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set('share', userId);
+
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      this.shareFeedback.set('Enlace para compartir copiado.');
+    } catch (error) {
+      console.error(error);
+      this.shareFeedback.set('No se pudo copiar el enlace.');
+    }
+  }
+
   private filterStickers(stickers: Sticker[], query: string): Sticker[] {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -309,6 +388,99 @@ export class AppComponent implements OnDestroy {
     return stickers.filter((sticker) =>
       `${sticker.code} ${sticker.section} ${sticker.teamCode}`.toLowerCase().includes(normalizedQuery)
     );
+  }
+
+  private formatStickerList(title: string, stickers: Sticker[]): string {
+    const rows = this.formatStickerRows(stickers, true);
+
+    if (!rows) {
+      return '';
+    }
+
+    return `${title}:\n\n${rows}`;
+  }
+
+  private formatStickerRows(stickers: Sticker[], includeEmoji: boolean): string {
+    return this.groupStickerRows(stickers, includeEmoji)
+      .map((group) =>
+      `${group.label}: ${group.numbers.join(', ')}`
+      )
+      .join('\n');
+  }
+
+  private groupStickerRows(stickers: Sticker[], includeEmoji: boolean): StickerGroup[] {
+    const grouped = new Map<string, StickerGroup>();
+
+    for (const sticker of stickers) {
+      const label = this.downloadLabel(sticker, includeEmoji);
+      const key = `${sticker.section}:${label}`;
+      const group = grouped.get(key) ?? { label, numbers: [] };
+
+      group.numbers.push(sticker.number);
+      grouped.set(key, group);
+    }
+
+    return Array.from(grouped.values());
+  }
+
+  private loadSharedAlbum(userId: string): void {
+    if (!this.firestore) {
+      this.loginError.set('La conexión no está configurada.');
+      return;
+    }
+
+    this.isLoadingSharedAlbum.set(true);
+    this.loginError.set('');
+    this.stickers.set(this.buildInitialStickers());
+    this.subscribeToAlbum(userId, `Álbum compartido por ${userId}`, () => {
+      this.isLoadingSharedAlbum.set(false);
+    });
+  }
+
+  private subscribeToAlbum(userId: string, syncMessage: string, onLoaded?: () => void): void {
+    if (!this.firestore) {
+      return;
+    }
+
+    this.stickersSubscription?.unsubscribe();
+    this.stickersSubscription = collectionData(collection(this.firestore, this.stickersPath(userId)), { idField: 'id' })
+      .subscribe({
+        next: (storedStickers) => {
+          const byId = new Map(
+            (storedStickers as StoredSticker[]).map((sticker) => [sticker.id, sticker])
+          );
+
+          this.stickers.update((stickers) =>
+            stickers.map((sticker) => ({
+              ...sticker,
+              status: byId.get(sticker.id)?.status ?? 'missing',
+              duplicateCount: byId.get(sticker.id)?.duplicateCount ?? 0,
+              updatedAt: byId.get(sticker.id)?.updatedAt
+            }))
+          );
+          this.syncState.set(syncMessage);
+          onLoaded?.();
+        },
+        error: (error) => {
+          console.error(error);
+          this.loginError.set(this.readableError(error));
+          this.syncState.set('No se pudieron cargar las barajitas');
+          onLoaded?.();
+        }
+      });
+  }
+
+  private downloadLabel(sticker: Sticker, includeEmoji: boolean): string {
+    if (sticker.section === 'FIFA World Cup 2026') {
+      return includeEmoji ? 'FWC 🏆' : 'FWC';
+    }
+
+    if (sticker.section === 'FIFA World Cup History') {
+      return includeEmoji ? 'FWC 📜' : 'FWC';
+    }
+
+    const emoji = TEAM_EMOJIS[sticker.teamCode];
+    return includeEmoji && emoji ? `${sticker.teamCode} ${emoji}` : sticker.teamCode;
   }
 
   private async authenticateUser(userId: string, password: string): Promise<boolean> {
@@ -367,6 +539,10 @@ export class AppComponent implements OnDestroy {
 
   private stickersPath(userId: string): string {
     return `users/${userId}/albums/${this.albumId}/stickers`;
+  }
+
+  private readSharedUserId(): string {
+    return this.normalizeUserId(new URLSearchParams(window.location.search).get('share') ?? '');
   }
 
   private normalizeUserId(value: string): string {

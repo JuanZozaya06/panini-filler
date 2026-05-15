@@ -41,7 +41,7 @@ Cada documento usa esta forma:
 }
 ```
 
-El catálogo local incluye 1012 barajitas de la edición Standard según LastSticker: 9 de apertura, 48 selecciones con 20 barajitas cada una, 11 de historia del Mundial y 32 Coca-Cola. No incluye Extra/Base.
+El catálogo local incluye 994 barajitas de la edición Standard según LastSticker: 9 de apertura, 48 selecciones con 20 barajitas cada una, 11 de historia del Mundial y 14 Coca-Cola Latinoamérica. No incluye Extra/Base.
 
 ## Desarrollo
 

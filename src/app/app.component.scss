@@ -37,7 +37,7 @@
   width: 100% !important;
   height: 100vh;
   margin: 0 auto;
-  padding: 1rem !important;
+  padding: 12px !important;
   backdrop-filter: blur(2px);
   overflow: hidden;
 }
@@ -65,7 +65,7 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-size: 32px;
   line-height: 0.95;
   text-shadow: 0 3px 0 rgba(23, 32, 38, 0.18);
   max-width: 640px;
@@ -114,6 +114,82 @@ h1 {
   gap: 18px;
   min-height: calc(100vh - 2rem);
   padding: 18px 0;
+}
+
+.shared-panel {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  height: calc(100vh - 2rem);
+}
+
+.shared-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.shared-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.shared-header h1 {
+  margin-bottom: 4px;
+}
+
+.shared-summary {
+  max-width: 520px;
+}
+
+.shared-loading,
+.share-feedback {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.shared-lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+
+.shared-list {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border: 1px solid rgba(30, 47, 58, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.shared-list h2 {
+  margin-bottom: 10px;
+}
+
+.shared-country-list {
+  flex: 1 1 auto;
+  max-height: calc(100vh - 250px);
+  display: grid;
+  gap: 12px;
+  overflow: auto;
+  color: #172026;
+  line-height: 1.55;
+}
+
+.shared-country-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.shared-country-row strong {
+  white-space: nowrap;
 }
 
 .login-logo {
@@ -335,8 +411,6 @@ button {
   grid-row: 2;
 }
 
-.dashboard.active-global .board-panel:first-child,
-.dashboard.active-sections .board-panel:nth-child(2),
 .dashboard.active-missing .list-panel:nth-of-type(1),
 .dashboard.active-duplicates .list-panel:nth-of-type(2) {
   grid-column: 1 / -1;
@@ -480,20 +554,6 @@ button {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-}
-
-.global-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
-  gap: 9px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding-right: 4px;
-}
-
-.global-grid .sticker-dot {
-  font-size: 0.7rem;
 }
 
 .album-section {
@@ -735,8 +795,6 @@ button {
     grid-row: 1;
   }
 
-  .dashboard.active-global .board-panel:first-child,
-  .dashboard.active-sections .board-panel:nth-child(2),
   .dashboard.active-missing .list-panel:nth-of-type(1),
   .dashboard.active-duplicates .list-panel:nth-of-type(2) {
     grid-column: 1 / -1;
@@ -747,7 +805,13 @@ button {
 @media (max-width: 620px) {
   .shell {
     width: 100% !important;
-    padding: 1rem !important;
+    padding: 12px !important;
+  }
+
+  .shared-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
   }
 
   .hero {
@@ -758,7 +822,7 @@ button {
 
   h1 {
     max-width: 280px;
-    font-size: clamp(2.6rem, 13vw, 3.4rem);
+    font-size: 16px;
   }
 
   .summary {
@@ -786,14 +850,6 @@ button {
 
   .sticker-dot {
     font-size: 0.68rem;
-  }
-
-  .global-grid {
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  }
-
-  .global-grid .sticker-dot {
-    font-size: 0.64rem;
   }
 
   .board-panel,
@@ -832,7 +888,7 @@ button {
 
 .panel-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   flex: 0 0 auto;
 }
@@ -926,8 +982,7 @@ button {
 }
 
 .active-panel .duplicate-dot-list,
-.active-panel .missing-dot-list,
-.active-panel .global-grid {
+.active-panel .missing-dot-list {
   max-height: none;
 }
 
@@ -946,7 +1001,7 @@ button {
 
   h1 {
     max-width: 100%;
-    font-size: clamp(1.2rem, 7vw, 1.7rem);
+    font-size: 16px;
   }
 
   .summary {
@@ -970,8 +1025,37 @@ button {
     height: calc(100vh - 178px);
   }
 
+  .shared-panel {
+    height: auto;
+    min-height: calc(100vh - 2rem);
+  }
+
+  .shared-header h1 {
+    font-size: 1.3rem;
+    line-height: 1.05;
+  }
+
+  .shared-summary {
+    width: 100%;
+  }
+
+  .shared-lists {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .shared-list {
+    padding: 12px;
+  }
+
+  .shared-country-list {
+    max-height: none;
+    line-height: 1.45;
+    font-size: 0.9rem;
+  }
+
   .panel-tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 5px;
   }
 
@@ -1047,7 +1131,7 @@ button {
   }
 
   .panel-tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     overflow: visible;
     padding-bottom: 0;
   }

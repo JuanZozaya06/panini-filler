@@ -30,29 +30,13 @@ const historyStickers: StickerDefinition[] = Array.from({ length: 11 }, (_, inde
   number: index + 9
 }));
 
-const cocaColaStickers: StickerDefinition[] = [
-  ...Array.from({ length: 12 }, (_, index) => ({
-    id: `CC-US${index + 1}`,
-    code: `CC-US${index + 1}`,
-    section: 'Coca-Cola / USA Canadá',
-    teamCode: 'CC-US',
-    number: index + 1
-  })),
-  ...Array.from({ length: 14 }, (_, index) => ({
-    id: `CC-LAM${index + 1}`,
-    code: `CC-LAM${index + 1}`,
-    section: 'Coca-Cola / Latinoamérica',
-    teamCode: 'CC-LAM',
-    number: index + 1
-  })),
-  ...Array.from({ length: 6 }, (_, index) => ({
-    id: `CC-SRB${index + 1}`,
-    code: `CC-SRB${index + 1}`,
-    section: 'Coca-Cola / Serbia',
-    teamCode: 'CC-SRB',
-    number: index + 1
-  }))
-];
+const cocaColaStickers: StickerDefinition[] = Array.from({ length: 14 }, (_, index) => ({
+  id: `CC-LAM${index + 1}`,
+  code: `CC-LAM${index + 1}`,
+  section: 'Coca-Cola / Latinoamérica',
+  teamCode: 'CC-LAM',
+  number: index + 1
+}));
 
 const teams: TeamDefinition[] = [
   { code: 'MEX', name: 'México' },

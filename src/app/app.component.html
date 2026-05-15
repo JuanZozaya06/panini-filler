@@ -1,4 +1,67 @@
-<main class="shell">
+<main class="shell" [class.shared-shell]="isSharedView()">
+  <section class="shared-panel" *ngIf="isSharedView(); else privateAlbum">
+    <header class="shared-header">
+      <img class="shared-logo" src="worldcup.png" alt="World Cup 2026" />
+      <div>
+        <h1>Álbum de {{ sharedUserId() }}</h1>
+        <p class="subtitle">Vista compartida de solo lectura</p>
+      </div>
+    </header>
+
+    <div class="summary shared-summary" aria-label="Resumen del álbum compartido">
+      <div>
+        <strong>{{ missingStickers().length }}</strong>
+        <span>faltan</span>
+      </div>
+      <div>
+        <strong>{{ duplicateCopies() }}</strong>
+        <span>repetidas</span>
+      </div>
+      <div>
+        <strong>{{ completedPercent() }}%</strong>
+        <span>completado</span>
+      </div>
+    </div>
+
+    <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
+    <p class="shared-loading" *ngIf="isLoadingSharedAlbum()">Cargando álbum compartido...</p>
+
+    <section class="shared-lists" *ngIf="!isLoadingSharedAlbum()">
+      <article class="shared-list">
+        <h2>Me faltan</h2>
+        <div class="shared-country-list" *ngIf="sharedMissingGroups().length; else noSharedMissing">
+          <div
+            class="shared-country-row"
+            *ngFor="let group of sharedMissingGroups(); trackBy: trackStickerGroup"
+          >
+            <strong>{{ group.label }}:</strong>
+            <span>{{ group.numbers.join(", ") }}</span>
+          </div>
+        </div>
+        <ng-template #noSharedMissing>
+          <p class="empty">No faltan barajitas.</p>
+        </ng-template>
+      </article>
+
+      <article class="shared-list">
+        <h2>Repetidas</h2>
+        <div class="shared-country-list" *ngIf="sharedDuplicateGroups().length; else noSharedDuplicates">
+          <div
+            class="shared-country-row"
+            *ngFor="let group of sharedDuplicateGroups(); trackBy: trackStickerGroup"
+          >
+            <strong>{{ group.label }}:</strong>
+            <span>{{ group.numbers.join(", ") }}</span>
+          </div>
+        </div>
+        <ng-template #noSharedDuplicates>
+          <p class="empty">No hay repetidas marcadas.</p>
+        </ng-template>
+      </article>
+    </section>
+  </section>
+
+  <ng-template #privateAlbum>
   <section class="login-panel" *ngIf="!currentUserId()">
     <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
     <div class="login-copy">
@@ -49,6 +112,15 @@
           <button
             type="button"
             class="logout-icon-button"
+            aria-label="Copiar enlace para compartir"
+            title="Copiar enlace para compartir"
+            (click)="copyShareLink()"
+          >
+            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+          </button>
+          <button
+            type="button"
+            class="logout-icon-button"
             aria-label="Cerrar sesión"
             title="Cerrar sesión"
             (click)="logout()"
@@ -57,6 +129,7 @@
           </button>
         </div>
       </div>
+      <p class="share-feedback" *ngIf="shareFeedback()">{{ shareFeedback() }}</p>
 
       <div class="summary" aria-label="Resumen del álbum">
         <div>
@@ -82,18 +155,10 @@
       <nav class="panel-tabs" aria-label="Vistas del álbum">
         <button
           type="button"
-          [class.active]="activePanel() === 'global'"
-          (click)="togglePanel('global')"
+          [class.active]="activePanel() === 'album'"
+          (click)="togglePanel('album')"
         >
-          <strong>Global</strong>
-          <span>{{ ownedStickers().length }} tengo</span>
-        </button>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'sections'"
-          (click)="togglePanel('sections')"
-        >
-          <strong>Categorías</strong>
+          <strong>Mi álbum</strong>
           <span>{{ sections().length }} grupos</span>
         </button>
         <button
@@ -117,98 +182,10 @@
       </nav>
 
       <article class="active-panel">
-        <ng-container *ngIf="activePanel() === 'global'">
+        <ng-container *ngIf="activePanel() === 'album'">
           <header class="active-panel-header">
             <div>
-              <h2>Vista global</h2>
-              <p>
-                {{ ownedStickers().length }} tengo | {{ duplicateCopies() }} ({{
-                  duplicateStickers().length
-                }}) repetidas | {{ missingStickers().length }} faltan
-              </p>
-            </div>
-            <div class="legend">
-              <span class="dot status-owned"></span>Tengo
-              <span class="dot status-duplicate"></span>Repetida
-              <span class="dot status-missing"></span>Falta
-            </div>
-          </header>
-
-          <input
-            class="list-search"
-            type="search"
-            placeholder="Buscar barajita global"
-            [ngModel]="globalQuery()"
-            (ngModelChange)="globalQuery.set($event)"
-            autocomplete="off"
-          />
-
-          <div
-            class="scroll-grid global-grid"
-            aria-label="Todas las barajitas del álbum"
-          >
-            <button
-              type="button"
-              class="sticker-dot"
-              *ngFor="
-                let sticker of filteredGlobalStickers();
-                trackBy: trackStickerId
-              "
-              [class]="statusClass(sticker.status)"
-              [attr.aria-label]="
-                'Barajita ' +
-                sticker.code +
-                ' de ' +
-                sticker.section +
-                ': ' +
-                statusLabels[sticker.status]
-              "
-              (click)="cycleStickerStatus(sticker)"
-            >
-              {{ sticker.code }}
-              <span
-                class="sticker-count-badge"
-                *ngIf="sticker.status === 'duplicate'"
-                >x{{ sticker.duplicateCount }}</span
-              >
-              <span
-                class="decrement-duplicate-badge"
-                *ngIf="sticker.status === 'owned'"
-                role="button"
-                tabindex="0"
-                title="Marcar como faltante"
-                [attr.aria-label]="'Marcar como faltante ' + sticker.code"
-                (click)="markStickerMissing(sticker, $event)"
-                (keydown.enter)="markStickerMissing(sticker, $event)"
-                (keydown.space)="
-                  $event.preventDefault(); markStickerMissing(sticker, $event)
-                "
-              >
-                <i class="fa-solid fa-minus" aria-hidden="true"></i>
-              </span>
-              <span
-                class="decrement-duplicate-badge"
-                *ngIf="sticker.status === 'duplicate'"
-                role="button"
-                tabindex="0"
-                title="Restar repetida"
-                [attr.aria-label]="'Restar repetida de ' + sticker.code"
-                (click)="decrementDuplicate(sticker, $event)"
-                (keydown.enter)="decrementDuplicate(sticker, $event)"
-                (keydown.space)="
-                  $event.preventDefault(); decrementDuplicate(sticker, $event)
-                "
-              >
-                <i class="fa-solid fa-minus" aria-hidden="true"></i>
-              </span>
-            </button>
-          </div>
-        </ng-container>
-
-        <ng-container *ngIf="activePanel() === 'sections'">
-          <header class="active-panel-header">
-            <div>
-              <h2>Por país/categoría</h2>
+              <h2>Mi álbum</h2>
               <p>
                 {{ sections().length }} grupos | {{ completedPercent() }}%
                 completado
@@ -436,4 +413,5 @@
       </article>
     </section>
   </ng-container>
+  </ng-template>
 </main>
