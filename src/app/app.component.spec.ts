@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
@@ -45,6 +45,23 @@ describe('AppComponent', () => {
     expect(app.ownedStickers().map((sticker) => sticker.id)).toContain('MEX2');
     expect(app.ownedStickers().length).toBe(2);
   });
+
+  it('should mark a changed sticker for temporary visual feedback', fakeAsync(() => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    const sticker = app.stickers().find((current) => current.id === 'MEX1');
+
+    expect(sticker).toBeDefined();
+
+    void app.setStickerStatus(sticker!, 'owned');
+    tick();
+
+    expect(app.recentlyChangedStickerId()).toBe('MEX1');
+
+    tick(900);
+
+    expect(app.recentlyChangedStickerId()).toBe('');
+  }));
 
   it('should filter album sections with the album search query', () => {
     const fixture = TestBed.createComponent(AppComponent);
@@ -215,6 +232,35 @@ KOR 🇰🇷: 1`);
     expect(app.exchangeStep()).toBe('form');
     expect(app.exchangePartnerName()).toBe('Daniela');
     expect(app.exchangeSourceText()).toContain('MEX');
+  });
+
+  it('should reset the exchange flow when entering the exchange panel again', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+
+    app.activePanel.set('album');
+    app.exchangePartnerName.set('Daniela');
+    app.exchangeSourceText.set('Me faltan\nMEX 🇲🇽: 12');
+    app.exchangeFeedback.set('Cambio copiado al portapapeles.');
+    app.exchangeHasPreview.set(true);
+    app.exchangeDraft.set({
+      partnerName: 'Daniela',
+      partnerGives: [],
+      userGives: [],
+      parsedCount: 1,
+      text: 'Cambio con Daniela'
+    });
+    app.exchangeStep.set('review');
+
+    app.togglePanel('exchange');
+
+    expect(app.activePanel()).toBe('exchange');
+    expect(app.exchangePartnerName()).toBe('');
+    expect(app.exchangeSourceText()).toBe('');
+    expect(app.exchangeFeedback()).toBe('');
+    expect(app.exchangeHasPreview()).toBeFalse();
+    expect(app.exchangeDraft()).toBeNull();
+    expect(app.exchangeStep()).toBe('form');
   });
 
   it('should balance exchange previews by quantity and sticker number one count', () => {

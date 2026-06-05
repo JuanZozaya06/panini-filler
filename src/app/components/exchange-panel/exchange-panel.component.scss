@@ -1,0 +1,194 @@
+:host {
+  display: contents;
+}
+
+.active-panel-header {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.active-panel-header h2 {
+  margin: 0 0 2px;
+  font-size: 1.08rem;
+}
+
+.active-panel-header p {
+  margin: 0;
+  color: #60707b;
+  font-size: 0.82rem;
+}
+
+.exchange-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.exchange-form,
+.exchange-review,
+.exchange-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.exchange-preview {
+  justify-content: stretch;
+}
+
+.exchange-form {
+  gap: 9px;
+  height: 100%;
+  flex: 1;
+}
+
+.exchange-form label {
+  color: #172026;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.list-search {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(30, 47, 58, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  color: #172026;
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  padding: 0 12px;
+}
+
+.list-search:focus {
+  border-color: #1c7c68;
+}
+
+.exchange-textarea {
+  flex: 1 1 auto;
+  resize: none;
+  border: 1px solid rgba(30, 47, 58, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  color: #172026;
+  font: inherit;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  outline: none;
+  padding: 12px;
+}
+
+.exchange-textarea:focus {
+  border-color: #1c7c68;
+}
+
+.exchange-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.exchange-primary-button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #172026;
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.exchange-primary-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exchange-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.exchange-preview pre {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid rgba(30, 47, 58, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  color: #172026;
+  font:
+    0.86rem/1.5 "Nunito",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  white-space: pre-wrap;
+}
+
+.exchange-review-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.copy-feedback {
+  flex: 0 0 auto;
+  margin: 0 0 10px;
+  color: #2f6f54;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+@media (max-width: 620px) {
+  .active-panel-header {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .exchange-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    display: flex;
+  }
+
+  .exchange-textarea {
+    flex: 1;
+  }
+
+  .exchange-preview {
+    flex: 1;
+    padding-bottom: 2px;
+  }
+
+  .exchange-preview pre {
+    flex: 1;
+    min-height: 130px;
+    overflow: auto;
+  }
+
+  .exchange-review-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

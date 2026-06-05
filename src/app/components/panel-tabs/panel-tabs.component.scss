@@ -1,0 +1,85 @@
+:host {
+  display: contents;
+}
+
+.panel-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.panel-tabs button {
+  display: grid;
+  gap: 2px;
+  min-height: 46px;
+  padding: 7px 8px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #172026;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-tabs button.active {
+  border-color: #5ed69c;
+  background: #fff;
+}
+
+.panel-tabs strong {
+  font-size: 0.78rem;
+  line-height: 1.05;
+}
+
+.panel-tabs span {
+  color: #60707b;
+  font-size: 0.62rem;
+  line-height: 1.2;
+}
+
+@media (min-width: 961px) {
+  .panel-tabs {
+    grid-template-columns: 1fr;
+    align-content: start;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 1rem;
+  }
+
+  .panel-tabs button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 960px) {
+  .panel-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .panel-tabs {
+    display: flex;
+    gap: 5px;
+  }
+
+  .panel-tabs button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 42px;
+    padding: 6px 5px;
+  }
+
+  .panel-tabs strong {
+    font-size: 0.62rem;
+  }
+
+  .panel-tabs span {
+    font-size: 0.55rem;
+  }
+}

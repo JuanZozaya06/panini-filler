@@ -13,51 +13,22 @@ import {
 import { Subscription } from 'rxjs';
 import { environment } from '../environments/environment';
 import { ALBUM_CATALOG, StickerDefinition } from './album-catalog';
-
-type StickerStatus = 'missing' | 'owned' | 'duplicate';
-type PanelId = 'album' | 'missing' | 'duplicates' | 'exchange';
-type ExchangeStep = 'form' | 'review';
-
-interface Sticker {
-  id: string;
-  code: string;
-  section: string;
-  teamCode: string;
-  number: number;
-  status: StickerStatus;
-  duplicateCount: number;
-  updatedAt?: string;
-}
-
-interface StoredSticker {
-  id: string;
-  status: StickerStatus;
-  duplicateCount?: number;
-  updatedAt?: string;
-}
-
-interface StoredUser {
-  passwordHash?: string;
-}
-
-interface StickerGroup {
-  label: string;
-  numbers: number[];
-}
-
-interface ParsedStickerList {
-  missingIds: Set<string>;
-  duplicateIds: Set<string>;
-  recognizedCount: number;
-}
-
-interface ExchangePreview {
-  partnerName: string;
-  partnerGives: Sticker[];
-  userGives: Sticker[];
-  parsedCount: number;
-  text: string;
-}
+import {
+  ExchangePreview,
+  ExchangeStep,
+  PanelId,
+  Sticker,
+  StickerStatus,
+  StoredSticker,
+  StoredUser
+} from './app.models';
+import { AlbumHeroComponent } from './components/album-hero/album-hero.component';
+import { ExchangePanelComponent } from './components/exchange-panel/exchange-panel.component';
+import { LoginPanelComponent } from './components/login-panel/login-panel.component';
+import { PanelTabsComponent } from './components/panel-tabs/panel-tabs.component';
+import { SharedAlbumViewComponent } from './components/shared-album-view/shared-album-view.component';
+import { ExchangeService } from './exchange.service';
+import { StickerFormatService } from './sticker-format.service';
 
 const STATUS_LABELS: Record<StickerStatus, string> = {
   missing: 'Falta',
@@ -65,69 +36,28 @@ const STATUS_LABELS: Record<StickerStatus, string> = {
   duplicate: 'Repetida'
 };
 
-const TEAM_EMOJIS: Record<string, string> = {
-  MEX: '🇲🇽',
-  RSA: '🇿🇦',
-  KOR: '🇰🇷',
-  CZE: '🇨🇿',
-  CAN: '🇨🇦',
-  BIH: '🇧🇦',
-  QAT: '🇶🇦',
-  SUI: '🇨🇭',
-  BRA: '🇧🇷',
-  MAR: '🇲🇦',
-  HAI: '🇭🇹',
-  SCO: '🏴',
-  USA: '🇺🇸',
-  PAR: '🇵🇾',
-  AUS: '🇦🇺',
-  TUR: '🇹🇷',
-  GER: '🇩🇪',
-  CUW: '🇨🇼',
-  CIV: '🇨🇮',
-  ECU: '🇪🇨',
-  NED: '🇳🇱',
-  JPN: '🇯🇵',
-  SWE: '🇸🇪',
-  TUN: '🇹🇳',
-  BEL: '🇧🇪',
-  EGY: '🇪🇬',
-  IRN: '🇮🇷',
-  NZL: '🇳🇿',
-  ESP: '🇪🇸',
-  CPV: '🇨🇻',
-  KSA: '🇸🇦',
-  URU: '🇺🇾',
-  FRA: '🇫🇷',
-  SEN: '🇸🇳',
-  IRQ: '🇮🇶',
-  NOR: '🇳🇴',
-  ARG: '🇦🇷',
-  ALG: '🇩🇿',
-  AUT: '🇦🇹',
-  JOR: '🇯🇴',
-  POR: '🇵🇹',
-  COD: '🇨🇩',
-  UZB: '🇺🇿',
-  COL: '🇨🇴',
-  ENG: '🏴',
-  CRO: '🇭🇷',
-  GHA: '🇬🇭',
-  PAN: '🇵🇦',
-  'CC-LAM': '🌎'
-};
-
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AlbumHeroComponent,
+    LoginPanelComponent,
+    PanelTabsComponent,
+    SharedAlbumViewComponent,
+    ExchangePanelComponent
+  ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
   private readonly firestore = inject(Firestore, { optional: true });
+  private readonly exchangeService = inject(ExchangeService);
+  private readonly stickerFormatter = inject(StickerFormatService);
   private readonly albumId = 'world-cup-2026';
   private stickersSubscription?: Subscription;
+  private stickerFeedbackTimeout?: ReturnType<typeof setTimeout>;
 
   readonly statusLabels = STATUS_LABELS;
   readonly syncState = signal(environment.firebase.enabled ? '' : 'Firebase sin configurar');
@@ -152,6 +82,7 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly shareFeedback = signal('');
   readonly activePanel = signal<PanelId>('album');
   readonly isApplyingExchange = signal(false);
+  readonly recentlyChangedStickerId = signal('');
   readonly isSharedView = computed(() => !!this.sharedUserId());
 
   readonly stickers = signal<Sticker[]>(this.buildInitialStickers());
@@ -187,13 +118,18 @@ export class AppComponent implements OnInit, OnDestroy {
     this.formatStickerList('Repetidas', this.duplicateStickers())
   );
   readonly exchangePreview = computed(() =>
-    this.buildExchangePreview(this.exchangePartnerName(), this.exchangeSourceText())
+    this.exchangeService.buildExchangePreview(
+      this.exchangePartnerName(),
+      this.exchangeSourceText(),
+      this.missingStickers(),
+      this.duplicateStickers()
+    )
   );
   readonly sharedMissingGroups = computed(() =>
-    this.groupStickerRows(this.missingStickers(), false)
+    this.stickerFormatter.groupStickerRows(this.missingStickers(), false)
   );
   readonly sharedDuplicateGroups = computed(() =>
-    this.groupStickerRows(this.duplicateStickers(), false)
+    this.stickerFormatter.groupStickerRows(this.duplicateStickers(), false)
   );
   readonly sections = computed(() => {
     const grouped = new Map<string, Sticker[]>();
@@ -224,6 +160,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stickersSubscription?.unsubscribe();
+    clearTimeout(this.stickerFeedbackTimeout);
   }
 
   async login(): Promise<void> {
@@ -304,6 +241,7 @@ export class AppComponent implements OnInit, OnDestroy {
         current.id === sticker.id ? { ...current, status, duplicateCount: nextDuplicateCount } : current
       )
     );
+    this.showStickerFeedback(sticker.id);
 
     const userId = this.currentUserId();
 
@@ -358,11 +296,11 @@ export class AppComponent implements OnInit, OnDestroy {
     return section.name;
   }
 
-  trackStickerGroup(_: number, group: StickerGroup): string {
-    return group.label;
-  }
-
   togglePanel(panel: PanelId): void {
+    if (panel === 'exchange' && this.activePanel() !== 'exchange') {
+      this.resetExchange();
+    }
+
     this.activePanel.set(panel);
     this.copyFeedback.set('');
     this.exchangeFeedback.set('');
@@ -411,6 +349,28 @@ export class AppComponent implements OnInit, OnDestroy {
   returnToExchangeForm(): void {
     this.exchangeStep.set('form');
     this.exchangeFeedback.set('');
+  }
+
+  private resetExchange(): void {
+    this.exchangePartnerName.set('');
+    this.exchangeSourceText.set('');
+    this.exchangeFeedback.set('');
+    this.exchangeHasPreview.set(false);
+    this.exchangeDraft.set(null);
+    this.exchangeStep.set('form');
+  }
+
+  private showStickerFeedback(stickerId: string): void {
+    clearTimeout(this.stickerFeedbackTimeout);
+    this.recentlyChangedStickerId.set('');
+
+    setTimeout(() => {
+      this.recentlyChangedStickerId.set(stickerId);
+    });
+
+    this.stickerFeedbackTimeout = setTimeout(() => {
+      this.recentlyChangedStickerId.set('');
+    }, 900);
   }
 
   generateExchangePreview(): void {
@@ -588,180 +548,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private formatStickerList(title: string, stickers: Sticker[]): string {
-    const rows = this.formatStickerRows(stickers, true);
-
-    if (!rows) {
-      return '';
-    }
-
-    return `${title}:\n\n${rows}`;
-  }
-
-  private formatStickerRows(stickers: Sticker[], includeEmoji: boolean, highlightNumberOne = false): string {
-    return this.groupStickerRows(stickers, includeEmoji)
-      .map((group) =>
-      `${group.label}: ${group.numbers.map((number) => this.formatStickerNumber(number, highlightNumberOne)).join(', ')}`
-      )
-      .join('\n');
-  }
-
-  private formatStickerNumber(number: number, highlightNumberOne: boolean): string {
-    return highlightNumberOne && number === 1 ? '1 ⭐' : String(number);
-  }
-
-  private buildExchangePreview(partnerName: string, sourceText: string): ExchangePreview {
-    const normalizedPartnerName = partnerName.trim();
-    const parsedList = this.parseExternalStickerList(sourceText);
-    const partnerCandidates = this.missingStickers().filter((sticker) => parsedList.duplicateIds.has(sticker.id));
-    const userCandidates = this.duplicateStickers().filter((sticker) => parsedList.missingIds.has(sticker.id));
-    const { partnerGives, userGives } = this.balanceExchangeLists(partnerCandidates, userCandidates);
-    const titleName = normalizedPartnerName || 'la otra persona';
-    const partnerRows = this.formatStickerRows(partnerGives, true, true) || 'Nada por ahora';
-    const userRows = this.formatStickerRows(userGives, true, true) || 'Nada por ahora';
-    const text = normalizedPartnerName || partnerGives.length || userGives.length
-      ? `Cambio con ${titleName}\n\n${titleName} me da (${partnerGives.length}):\n${partnerRows}\n\nYo le doy (${userGives.length}):\n${userRows}`
-      : '';
-
-    return {
-      partnerName: normalizedPartnerName,
-      partnerGives,
-      userGives,
-      parsedCount: parsedList.recognizedCount,
-      text
-    };
-  }
-
-  private balanceExchangeLists(
-    partnerCandidates: Sticker[],
-    userCandidates: Sticker[]
-  ): Pick<ExchangePreview, 'partnerGives' | 'userGives'> {
-    const targetCount = Math.min(partnerCandidates.length, userCandidates.length);
-
-    if (!targetCount) {
-      return { partnerGives: [], userGives: [] };
-    }
-
-    const partnerOneCount = this.balancedStickerOneCount(partnerCandidates, userCandidates, targetCount);
-    const userOneCount = this.balancedStickerOneCount(userCandidates, partnerCandidates, targetCount);
-
-    return {
-      partnerGives: this.selectBalancedStickers(partnerCandidates, targetCount, partnerOneCount),
-      userGives: this.selectBalancedStickers(userCandidates, targetCount, userOneCount)
-    };
-  }
-
-  private balancedStickerOneCount(stickers: Sticker[], oppositeStickers: Sticker[], targetCount: number): number {
-    const oneCount = this.stickerOneCount(stickers);
-    const oppositeOneCount = this.stickerOneCount(oppositeStickers);
-    const otherCount = stickers.length - oneCount;
-    const preferredOneCount = Math.min(oneCount, oppositeOneCount, targetCount);
-    const requiredOneCount = Math.max(0, targetCount - otherCount);
-
-    return Math.min(Math.max(preferredOneCount, requiredOneCount), oneCount, targetCount);
-  }
-
-  private stickerOneCount(stickers: Sticker[]): number {
-    return stickers.filter((sticker) => sticker.number === 1).length;
-  }
-
-  private selectBalancedStickers(stickers: Sticker[], targetCount: number, oneCount: number): Sticker[] {
-    const otherCount = targetCount - oneCount;
-    let selectedOnes = 0;
-    let selectedOthers = 0;
-
-    return stickers.filter((sticker) => {
-      if (sticker.number === 1) {
-        if (selectedOnes >= oneCount) {
-          return false;
-        }
-
-        selectedOnes += 1;
-        return true;
-      }
-
-      if (selectedOthers >= otherCount) {
-        return false;
-      }
-
-      selectedOthers += 1;
-      return true;
-    });
-  }
-
-  private parseExternalStickerList(text: string): ParsedStickerList {
-    const missingIds = new Set<string>();
-    const duplicateIds = new Set<string>();
-    let currentList: 'missing' | 'duplicates' | '' = '';
-    let recognizedCount = 0;
-
-    for (const rawLine of text.split(/\r?\n/)) {
-      const line = rawLine.trim();
-      const normalizedLine = line
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-
-      if (!line) {
-        continue;
-      }
-
-      if (normalizedLine === 'me faltan' || normalizedLine.startsWith('me faltan:')) {
-        currentList = 'missing';
-        continue;
-      }
-
-      if (normalizedLine === 'repetidas' || normalizedLine.startsWith('repetidas:')) {
-        currentList = 'duplicates';
-        continue;
-      }
-
-      if (!currentList || !line.includes(':')) {
-        continue;
-      }
-
-      const separatorIndex = line.indexOf(':');
-      const label = line.slice(0, separatorIndex);
-      const values = line.slice(separatorIndex + 1);
-      const teamCode = this.extractTeamCode(label);
-
-      if (!teamCode || !values) {
-        continue;
-      }
-
-      const numberMatches = values.replace(/\([^)]*\)/g, '').match(/\b\d{1,2}\b/g) ?? [];
-
-      for (const numberText of numberMatches) {
-        const sticker = this.findStickerByTeamAndNumber(teamCode, Number(numberText));
-
-        if (!sticker) {
-          continue;
-        }
-
-        if (currentList === 'missing') {
-          missingIds.add(sticker.id);
-        } else {
-          duplicateIds.add(sticker.id);
-        }
-
-        recognizedCount += 1;
-      }
-    }
-
-    return { missingIds, duplicateIds, recognizedCount };
-  }
-
-  private extractTeamCode(label: string): string {
-    const normalizedLabel = label.toUpperCase();
-
-    if (normalizedLabel.includes('CC-LAM')) {
-      return 'CC-LAM';
-    }
-
-    return normalizedLabel.match(/[A-Z]{3}/)?.[0] ?? '';
-  }
-
-  private findStickerByTeamAndNumber(teamCode: string, number: number): StickerDefinition | undefined {
-    return ALBUM_CATALOG.find((sticker) => sticker.teamCode === teamCode && sticker.number === number);
+    return this.stickerFormatter.formatStickerList(title, stickers);
   }
 
   private stickersForStorage(stickers: Sticker[]): Array<Pick<Sticker, 'id' | 'code' | 'teamCode' | 'number'>> {
@@ -771,21 +558,6 @@ export class AppComponent implements OnInit, OnDestroy {
       teamCode: sticker.teamCode,
       number: sticker.number
     }));
-  }
-
-  private groupStickerRows(stickers: Sticker[], includeEmoji: boolean): StickerGroup[] {
-    const grouped = new Map<string, StickerGroup>();
-
-    for (const sticker of stickers) {
-      const label = this.downloadLabel(sticker, includeEmoji);
-      const key = `${sticker.section}:${label}`;
-      const group = grouped.get(key) ?? { label, numbers: [] };
-
-      group.numbers.push(sticker.number);
-      grouped.set(key, group);
-    }
-
-    return Array.from(grouped.values());
   }
 
   private loadSharedAlbum(userId: string): void {
@@ -833,19 +605,6 @@ export class AppComponent implements OnInit, OnDestroy {
           onLoaded?.();
         }
       });
-  }
-
-  private downloadLabel(sticker: Sticker, includeEmoji: boolean): string {
-    if (sticker.section === 'FIFA World Cup 2026') {
-      return includeEmoji ? 'FWC 🏆' : 'FWC';
-    }
-
-    if (sticker.section === 'FIFA World Cup History') {
-      return includeEmoji ? 'FWC 📜' : 'FWC';
-    }
-
-    const emoji = TEAM_EMOJIS[sticker.teamCode];
-    return includeEmoji && emoji ? `${sticker.teamCode} ${emoji}` : sticker.teamCode;
   }
 
   private async authenticateUser(userId: string, password: string): Promise<boolean> {

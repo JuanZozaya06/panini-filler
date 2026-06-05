@@ -1,0 +1,34 @@
+<nav class="panel-tabs" aria-label="Vistas del álbum">
+  <button
+    type="button"
+    [class.active]="activePanel === 'album'"
+    (click)="selected.emit('album')"
+  >
+    <strong>Mi álbum</strong>
+    <span>{{ sectionCount }} grupos</span>
+  </button>
+  <button
+    type="button"
+    [class.active]="activePanel === 'missing'"
+    (click)="selected.emit('missing')"
+  >
+    <strong>Me faltan</strong>
+    <span>{{ missingCount }} barajitas</span>
+  </button>
+  <button
+    type="button"
+    [class.active]="activePanel === 'duplicates'"
+    (click)="selected.emit('duplicates')"
+  >
+    <strong>Repetidas</strong>
+    <span>{{ duplicateCopies }} ({{ duplicateGroups }})</span>
+  </button>
+  <button
+    type="button"
+    [class.active]="activePanel === 'exchange'"
+    (click)="selected.emit('exchange')"
+  >
+    <strong>Cambio</strong>
+    <span>cruzar listas</span>
+  </button>
+</nav>

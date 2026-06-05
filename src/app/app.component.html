@@ -1,222 +1,52 @@
 <main class="shell" [class.shared-shell]="isSharedView()">
-  <section class="shared-panel" *ngIf="isSharedView(); else privateAlbum">
-    <button
-      type="button"
-      class="shared-header"
-      aria-label="Volver al inicio de sesión"
-      title="Volver al inicio de sesión"
-      (click)="returnToLogin()"
-    >
-      <img class="shared-logo" src="worldcup.png" alt="World Cup 2026" />
-      <div>
-        <h1>Álbum de {{ sharedUserId() }}</h1>
-      </div>
-    </button>
-
-    <div
-      class="summary shared-summary"
-      aria-label="Resumen del álbum compartido"
-    >
-      <div>
-        <strong>{{ missingStickers().length }}</strong>
-        <span>faltan</span>
-      </div>
-      <div>
-        <strong>{{ duplicateCopies() }}</strong>
-        <span>repetidas</span>
-      </div>
-      <div>
-        <strong>{{ completedPercent() }}%</strong>
-        <span>completado</span>
-      </div>
-    </div>
-
-    <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
-    <p class="shared-loading" *ngIf="isLoadingSharedAlbum()">
-      Cargando álbum compartido...
-    </p>
-
-    <section class="shared-lists" *ngIf="!isLoadingSharedAlbum()">
-      <article class="shared-list">
-        <h2>Me faltan</h2>
-        <div
-          class="shared-country-list"
-          *ngIf="sharedMissingGroups().length; else noSharedMissing"
-        >
-          <div
-            class="shared-country-row"
-            *ngFor="
-              let group of sharedMissingGroups();
-              trackBy: trackStickerGroup
-            "
-          >
-            <strong>{{ group.label }}:</strong>
-            <span>{{ group.numbers.join(", ") }}</span>
-          </div>
-        </div>
-        <ng-template #noSharedMissing>
-          <p class="empty">No faltan barajitas.</p>
-        </ng-template>
-      </article>
-
-      <article class="shared-list">
-        <h2>Repetidas</h2>
-        <div
-          class="shared-country-list"
-          *ngIf="sharedDuplicateGroups().length; else noSharedDuplicates"
-        >
-          <div
-            class="shared-country-row"
-            *ngFor="
-              let group of sharedDuplicateGroups();
-              trackBy: trackStickerGroup
-            "
-          >
-            <strong>{{ group.label }}:</strong>
-            <span>{{ group.numbers.join(", ") }}</span>
-          </div>
-        </div>
-        <ng-template #noSharedDuplicates>
-          <p class="empty">No hay repetidas marcadas.</p>
-        </ng-template>
-      </article>
-    </section>
-  </section>
+  <app-shared-album-view
+    *ngIf="isSharedView(); else privateAlbum"
+    [sharedUserId]="sharedUserId()"
+    [missingCount]="missingStickers().length"
+    [duplicateCopies]="duplicateCopies()"
+    [completedPercent]="completedPercent()"
+    [isLoading]="isLoadingSharedAlbum()"
+    [loginError]="loginError()"
+    [missingGroups]="sharedMissingGroups()"
+    [duplicateGroups]="sharedDuplicateGroups()"
+    (back)="returnToLogin()"
+  />
 
   <ng-template #privateAlbum>
-    <section class="login-panel" *ngIf="!currentUserId()">
-      <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
-      <div class="login-copy">
-        <h1>Gestiona tu álbum</h1>
-        <p class="subtitle">
-          Ingresa o regístrate con tu usuario para cargar tus barajitas.
-        </p>
-      </div>
-
-      <form class="login-form" (ngSubmit)="login()">
-        <label for="loginName">Usuario</label>
-        <input
-          id="loginName"
-          class="username-input"
-          name="loginName"
-          type="text"
-          [ngModel]="loginName()"
-          (ngModelChange)="loginName.set($event)"
-          autocomplete="username"
-          [disabled]="isLoggingIn()"
-        />
-
-        <label for="loginPassword">Contraseña</label>
-        <input
-          id="loginPassword"
-          name="loginPassword"
-          type="password"
-          [ngModel]="loginPassword()"
-          (ngModelChange)="loginPassword.set($event)"
-          autocomplete="current-password"
-          [disabled]="isLoggingIn()"
-        />
-
-        <button type="submit" [disabled]="isLoggingIn()">
-          <span class="spinner" *ngIf="isLoggingIn()" aria-hidden="true"></span>
-          {{ isLoggingIn() ? "Entrando" : "Entrar" }}
-        </button>
-        <p class="login-error" *ngIf="loginError()">{{ loginError() }}</p>
-      </form>
-    </section>
+    <app-login-panel
+      *ngIf="!currentUserId()"
+      [loginName]="loginName()"
+      [loginPassword]="loginPassword()"
+      [isLoggingIn]="isLoggingIn()"
+      [loginError]="loginError()"
+      (loginNameChange)="loginName.set($event)"
+      (loginPasswordChange)="loginPassword.set($event)"
+      (login)="login()"
+    />
 
     <ng-container *ngIf="currentUserId()">
-      <section class="hero">
-        <div class="topbar">
-          <h1>Mi álbum 2026</h1>
-          <div class="user-chip">
-            <span>{{ currentUserId() }}</span>
-            <button
-              type="button"
-              class="logout-icon-button"
-              aria-label="Copiar enlace para compartir"
-              title="Copiar enlace para compartir"
-              (click)="copyShareLink()"
-            >
-              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
-            </button>
-            <button
-              type="button"
-              class="logout-icon-button"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-              (click)="logout()"
-            >
-              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-        <p class="share-feedback" *ngIf="shareFeedback()">
-          {{ shareFeedback() }}
-        </p>
-
-        <div class="summary" aria-label="Resumen del álbum">
-          <div>
-            <strong
-              >{{ ownedStickers().length }}/{{ stickers().length }}</strong
-            >
-            <span>tengo</span>
-          </div>
-          <div>
-            <strong>{{ completedPercent() }}%</strong>
-            <span>completado</span>
-          </div>
-          <div>
-            <strong
-              >{{ duplicateCopies() }} ({{
-                duplicateStickers().length
-              }})</strong
-            >
-            <span>repetidas</span>
-          </div>
-        </div>
-      </section>
-
+      <app-album-hero
+        [userId]="currentUserId()"
+        [ownedCount]="ownedStickers().length"
+        [totalCount]="stickers().length"
+        [completedPercent]="completedPercent()"
+        [duplicateCopies]="duplicateCopies()"
+        [duplicateGroups]="duplicateStickers().length"
+        [shareFeedback]="shareFeedback()"
+        (share)="copyShareLink()"
+        (logout)="logout()"
+      />
       <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
 
       <section class="dashboard">
-        <nav class="panel-tabs" aria-label="Vistas del álbum">
-          <button
-            type="button"
-            [class.active]="activePanel() === 'album'"
-            (click)="togglePanel('album')"
-          >
-            <strong>Mi álbum</strong>
-            <span>{{ sections().length }} grupos</span>
-          </button>
-          <button
-            type="button"
-            [class.active]="activePanel() === 'missing'"
-            (click)="togglePanel('missing')"
-          >
-            <strong>Me faltan</strong>
-            <span>{{ missingStickers().length }} barajitas</span>
-          </button>
-          <button
-            type="button"
-            [class.active]="activePanel() === 'duplicates'"
-            (click)="togglePanel('duplicates')"
-          >
-            <strong>Repetidas</strong>
-            <span
-              >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</span
-            >
-          </button>
-          <button
-            type="button"
-            [class.active]="activePanel() === 'exchange'"
-            (click)="togglePanel('exchange')"
-          >
-            <strong>Cambio</strong>
-            <span>cruzar listas</span>
-          </button>
-        </nav>
-
+        <app-panel-tabs
+          [activePanel]="activePanel()"
+          [sectionCount]="sections().length"
+          [missingCount]="missingStickers().length"
+          [duplicateCopies]="duplicateCopies()"
+          [duplicateGroups]="duplicateStickers().length"
+          (selected)="togglePanel($event)"
+        />
         <article class="active-panel">
           <ng-container *ngIf="activePanel() === 'album'">
             <header class="active-panel-header">
@@ -273,6 +103,7 @@
                       trackBy: trackStickerId
                     "
                     [class]="statusClass(sticker.status)"
+                    [class.sticker-feedback]="recentlyChangedStickerId() === sticker.id"
                     [attr.aria-label]="
                       'Barajita ' +
                       sticker.code +
@@ -379,6 +210,7 @@
                   let sticker of filteredMissingStickers();
                   trackBy: trackStickerId
                 "
+                [class.sticker-feedback]="recentlyChangedStickerId() === sticker.id"
                 [attr.aria-label]="
                   'Marcar como tengo ' + sticker.code + ' de ' + sticker.section
                 "
@@ -446,6 +278,7 @@
               >
                 <span
                   class="sticker-dot status-duplicate duplicate-sticker-dot"
+                  [class.sticker-feedback]="recentlyChangedStickerId() === sticker.id"
                 >
                   {{ sticker.code }}
                   <span class="duplicate-count-badge"
@@ -468,109 +301,21 @@
           </ng-container>
 
           <ng-container *ngIf="activePanel() === 'exchange'">
-            <header class="active-panel-header">
-              <div>
-                <h2>
-                  {{
-                    exchangeStep() === "review"
-                      ? "Cambio sugerido"
-                      : "Generar cambio"
-                  }}
-                </h2>
-                <p>
-                  {{
-                    exchangeStep() === "review"
-                      ? "Revisa el mensaje antes de aplicarlo."
-                      : "Cruza tus barajitas con la lista de otra persona."
-                  }}
-                </p>
-              </div>
-            </header>
-
-            <div
-              class="exchange-layout"
-              [class.exchange-review-layout]="exchangeStep() === 'review'"
-            >
-              <section class="exchange-form" *ngIf="exchangeStep() === 'form'">
-                <label for="exchangePartnerName">Nombre</label>
-                <input
-                  id="exchangePartnerName"
-                  class="list-search"
-                  type="text"
-                  placeholder="Con quien cambias"
-                  [ngModel]="exchangePartnerName()"
-                  (ngModelChange)="updateExchangePartnerName($event)"
-                  autocomplete="off"
-                />
-
-                <label for="exchangeSourceText">Lista recibida</label>
-                <textarea
-                  id="exchangeSourceText"
-                  class="exchange-textarea"
-                  placeholder="Pega aqui el texto de Figuritas App"
-                  [ngModel]="exchangeSourceText()"
-                  (ngModelChange)="updateExchangeSourceText($event)"
-                ></textarea>
-
-                <div class="exchange-actions">
-                  <button
-                    type="button"
-                    class="exchange-primary-button"
-                    (click)="generateExchangePreview()"
-                  >
-                    <i class="fa-solid fa-repeat" aria-hidden="true"></i>
-                    <span>Generar cambio</span>
-                  </button>
-                </div>
-
-                <p class="copy-feedback" *ngIf="exchangeFeedback()">
-                  {{ exchangeFeedback() }}
-                </p>
-              </section>
-
-              <section
-                class="exchange-review"
-                *ngIf="exchangeStep() === 'review' && exchangeDraft()"
-              >
-                <div class="exchange-review-toolbar">
-                  <button
-                    type="button"
-                    class="exchange-primary-button"
-                    (click)="returnToExchangeForm()"
-                  >
-                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-                    <span>Volver</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="exchange-primary-button"
-                    [disabled]="!exchangeDraft()?.text"
-                    (click)="copyExchangeText()"
-                  >
-                    <i class="fa-solid fa-copy" aria-hidden="true"></i>
-                    <span>Copiar</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="exchange-primary-button"
-                    [disabled]="
-                      isApplyingExchange() ||
-                      !exchangeHasPreview() ||
-                      (!exchangeDraft()?.partnerGives?.length &&
-                        !exchangeDraft()?.userGives?.length)
-                    "
-                    (click)="applyExchange()"
-                  >
-                    <i class="fa-solid fa-check" aria-hidden="true"></i>
-                    <span>Guardar</span>
-                  </button>
-                </div>
-
-                <div class="exchange-preview">
-                  <pre>{{ exchangeDraft()?.text }}</pre>
-                </div>
-              </section>
-            </div>
+            <app-exchange-panel
+              [exchangeStep]="exchangeStep()"
+              [partnerName]="exchangePartnerName()"
+              [sourceText]="exchangeSourceText()"
+              [feedback]="exchangeFeedback()"
+              [hasPreview]="exchangeHasPreview()"
+              [isApplying]="isApplyingExchange()"
+              [draft]="exchangeDraft()"
+              (partnerNameChange)="updateExchangePartnerName($event)"
+              (sourceTextChange)="updateExchangeSourceText($event)"
+              (generate)="generateExchangePreview()"
+              (back)="returnToExchangeForm()"
+              (copy)="copyExchangeText()"
+              (apply)="applyExchange()"
+            />
           </ng-container>
         </article>
       </section>

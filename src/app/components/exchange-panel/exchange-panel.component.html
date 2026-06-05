@@ -1,0 +1,91 @@
+<header class="active-panel-header">
+  <div>
+    <h2>{{ exchangeStep === "review" ? "Cambio sugerido" : "Generar cambio" }}</h2>
+    <p>
+      {{
+        exchangeStep === "review"
+          ? "Revisa el mensaje antes de aplicarlo."
+          : "Cruza tus barajitas con la lista de otra persona."
+      }}
+    </p>
+  </div>
+</header>
+
+<div
+  class="exchange-layout"
+  [class.exchange-review-layout]="exchangeStep === 'review'"
+>
+  <section class="exchange-form" *ngIf="exchangeStep === 'form'">
+    <label for="exchangePartnerName">Nombre</label>
+    <input
+      id="exchangePartnerName"
+      class="list-search"
+      type="text"
+      placeholder="Con quien cambias"
+      [ngModel]="partnerName"
+      (ngModelChange)="partnerNameChange.emit($event)"
+      autocomplete="off"
+    />
+
+    <label for="exchangeSourceText">Lista recibida</label>
+    <textarea
+      id="exchangeSourceText"
+      class="exchange-textarea"
+      placeholder="Pega aqui el texto de Figuritas App"
+      [ngModel]="sourceText"
+      (ngModelChange)="sourceTextChange.emit($event)"
+    ></textarea>
+
+    <div class="exchange-actions">
+      <button
+        type="button"
+        class="exchange-primary-button"
+        (click)="generate.emit()"
+      >
+        <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+        <span>Generar cambio</span>
+      </button>
+    </div>
+
+    <p class="copy-feedback" *ngIf="feedback">{{ feedback }}</p>
+  </section>
+
+  <section class="exchange-review" *ngIf="exchangeStep === 'review' && draft">
+    <div class="exchange-review-toolbar">
+      <button
+        type="button"
+        class="exchange-primary-button"
+        (click)="back.emit()"
+      >
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        <span>Volver</span>
+      </button>
+      <button
+        type="button"
+        class="exchange-primary-button"
+        [disabled]="!draft.text"
+        (click)="copy.emit()"
+      >
+        <i class="fa-solid fa-copy" aria-hidden="true"></i>
+        <span>Copiar</span>
+      </button>
+      <button
+        type="button"
+        class="exchange-primary-button"
+        [disabled]="
+          isApplying ||
+          !hasPreview ||
+          (!draft.partnerGives.length && !draft.userGives.length)
+        "
+        (click)="apply.emit()"
+      >
+        <i class="fa-solid fa-check" aria-hidden="true"></i>
+        <span>Guardar</span>
+      </button>
+    </div>
+
+    <div class="exchange-preview">
+      <pre>{{ draft.text }}</pre>
+    </div>
+  </section>
+</div>

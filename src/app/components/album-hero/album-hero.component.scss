@@ -1,0 +1,140 @@
+:host {
+  display: contents;
+}
+
+.hero {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 8px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+}
+
+h1 {
+  max-width: 640px;
+  margin: 0;
+  color: #fff;
+  font-size: 32px;
+  line-height: 0.95;
+  text-shadow: 0 3px 0 rgba(23, 32, 38, 0.18);
+}
+
+.share-feedback {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.user-chip {
+  position: static;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+  padding: 5px 5px 5px 12px;
+  border: 2px solid rgba(23, 32, 38, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.user-chip span {
+  color: #172026;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.logout-icon-button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: #172026;
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  padding: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.summary div {
+  min-width: 0;
+  padding: 10px;
+  border: 2px solid #172026;
+  border-radius: 8px;
+}
+
+.summary div:nth-child(1) {
+  background: #ffe08a;
+}
+
+.summary div:nth-child(2) {
+  background: #b8f2d2;
+}
+
+.summary div:nth-child(3) {
+  background: #cbe7ff;
+}
+
+.summary strong {
+  display: block;
+  font-size: clamp(0.98rem, 2.3vw, 1.38rem);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.summary span {
+  color: #60707b;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 620px) {
+  .hero {
+    gap: 8px;
+    padding-top: 0;
+    padding-bottom: 8px;
+  }
+
+  h1 {
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .summary {
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .summary div {
+    padding: 9px 8px;
+  }
+
+  .summary strong {
+    font-size: clamp(0.92rem, 4.4vw, 1.18rem);
+  }
+
+  .summary span {
+    font-size: 0.64rem;
+  }
+}

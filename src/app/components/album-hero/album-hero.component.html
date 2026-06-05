@@ -1,0 +1,45 @@
+<section class="hero">
+  <div class="topbar">
+    <h1>Mi álbum 2026</h1>
+    <div class="user-chip">
+      <span>{{ userId }}</span>
+      <button
+        type="button"
+        class="logout-icon-button"
+        aria-label="Copiar enlace para compartir"
+        title="Copiar enlace para compartir"
+        (click)="share.emit()"
+      >
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        class="logout-icon-button"
+        aria-label="Cerrar sesión"
+        title="Cerrar sesión"
+        (click)="logout.emit()"
+      >
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <p class="share-feedback" *ngIf="shareFeedback">
+    {{ shareFeedback }}
+  </p>
+
+  <div class="summary" aria-label="Resumen del álbum">
+    <div>
+      <strong>{{ ownedCount }}/{{ totalCount }}</strong>
+      <span>tengo</span>
+    </div>
+    <div>
+      <strong>{{ completedPercent }}%</strong>
+      <span>completado</span>
+    </div>
+    <div>
+      <strong>{{ duplicateCopies }} ({{ duplicateGroups }})</strong>
+      <span>repetidas</span>
+    </div>
+  </div>
+</section>

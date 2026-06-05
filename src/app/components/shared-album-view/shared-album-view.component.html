@@ -1,0 +1,74 @@
+<section class="shared-panel">
+  <button
+    type="button"
+    class="shared-header"
+    aria-label="Volver al inicio de sesión"
+    title="Volver al inicio de sesión"
+    (click)="back.emit()"
+  >
+    <img class="shared-logo" src="worldcup.png" alt="World Cup 2026" />
+    <div>
+      <h1>Álbum de {{ sharedUserId }}</h1>
+    </div>
+  </button>
+
+  <div class="summary shared-summary" aria-label="Resumen del álbum compartido">
+    <div>
+      <strong>{{ missingCount }}</strong>
+      <span>faltan</span>
+    </div>
+    <div>
+      <strong>{{ duplicateCopies }}</strong>
+      <span>repetidas</span>
+    </div>
+    <div>
+      <strong>{{ completedPercent }}%</strong>
+      <span>completado</span>
+    </div>
+  </div>
+
+  <p class="app-error" *ngIf="loginError">{{ loginError }}</p>
+  <p class="shared-loading" *ngIf="isLoading">
+    Cargando álbum compartido...
+  </p>
+
+  <section class="shared-lists" *ngIf="!isLoading">
+    <article class="shared-list">
+      <h2>Me faltan</h2>
+      <div
+        class="shared-country-list"
+        *ngIf="missingGroups.length; else noSharedMissing"
+      >
+        <div
+          class="shared-country-row"
+          *ngFor="let group of missingGroups; trackBy: trackStickerGroup"
+        >
+          <strong>{{ group.label }}:</strong>
+          <span>{{ group.numbers.join(", ") }}</span>
+        </div>
+      </div>
+      <ng-template #noSharedMissing>
+        <p class="empty">No faltan barajitas.</p>
+      </ng-template>
+    </article>
+
+    <article class="shared-list">
+      <h2>Repetidas</h2>
+      <div
+        class="shared-country-list"
+        *ngIf="duplicateGroups.length; else noSharedDuplicates"
+      >
+        <div
+          class="shared-country-row"
+          *ngFor="let group of duplicateGroups; trackBy: trackStickerGroup"
+        >
+          <strong>{{ group.label }}:</strong>
+          <span>{{ group.numbers.join(", ") }}</span>
+        </div>
+      </div>
+      <ng-template #noSharedDuplicates>
+        <p class="empty">No hay repetidas marcadas.</p>
+      </ng-template>
+    </article>
+  </section>
+</section>

@@ -1,0 +1,134 @@
+:host {
+  display: contents;
+}
+
+.login-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+  align-content: center;
+  gap: 18px;
+  min-height: calc(100vh - 2rem);
+  padding: 18px 0;
+}
+
+.login-logo {
+  justify-self: center;
+  width: min(112px, 30vw);
+  height: auto;
+  object-fit: contain;
+}
+
+.login-copy {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+h1,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 640px;
+  margin-bottom: 0;
+  color: #fff;
+  font-size: 32px;
+  line-height: 0.95;
+  text-shadow: 0 3px 0 rgba(23, 32, 38, 0.18);
+}
+
+.subtitle {
+  max-width: none;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+}
+
+.login-form {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid rgba(30, 47, 58, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.login-form label {
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.login-form input {
+  min-height: 46px;
+  border: 1px solid rgba(30, 47, 58, 0.18);
+  border-radius: 8px;
+  font: inherit;
+  padding: 0 12px;
+  outline: 2px solid transparent;
+  outline-offset: 0;
+}
+
+.login-form input:focus {
+  border-color: rgba(30, 47, 58, 0.32);
+}
+
+.username-input {
+  text-transform: lowercase;
+}
+
+.login-form button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: #172026;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.login-form button:disabled,
+.login-form input:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.login-error {
+  margin: 0;
+  color: #d64545;
+  font-size: 0.86rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 960px) {
+  .login-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  h1 {
+    max-width: 100%;
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,40 @@
+<section class="login-panel">
+  <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
+  <div class="login-copy">
+    <h1>Gestiona tu álbum</h1>
+    <p class="subtitle">
+      Ingresa o regístrate con tu usuario para cargar tus barajitas.
+    </p>
+  </div>
+
+  <form class="login-form" (ngSubmit)="login.emit()">
+    <label for="loginName">Usuario</label>
+    <input
+      id="loginName"
+      class="username-input"
+      name="loginName"
+      type="text"
+      [ngModel]="loginName"
+      (ngModelChange)="loginNameChange.emit($event)"
+      autocomplete="username"
+      [disabled]="isLoggingIn"
+    />
+
+    <label for="loginPassword">Contraseña</label>
+    <input
+      id="loginPassword"
+      name="loginPassword"
+      type="password"
+      [ngModel]="loginPassword"
+      (ngModelChange)="loginPasswordChange.emit($event)"
+      autocomplete="current-password"
+      [disabled]="isLoggingIn"
+    />
+
+    <button type="submit" [disabled]="isLoggingIn">
+      <span class="spinner" *ngIf="isLoggingIn" aria-hidden="true"></span>
+      {{ isLoggingIn ? "Entrando" : "Entrar" }}
+    </button>
+    <p class="login-error" *ngIf="loginError">{{ loginError }}</p>
+  </form>
+</section>
