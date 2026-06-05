@@ -13,7 +13,10 @@
       </div>
     </button>
 
-    <div class="summary shared-summary" aria-label="Resumen del álbum compartido">
+    <div
+      class="summary shared-summary"
+      aria-label="Resumen del álbum compartido"
+    >
       <div>
         <strong>{{ missingStickers().length }}</strong>
         <span>faltan</span>
@@ -29,15 +32,23 @@
     </div>
 
     <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
-    <p class="shared-loading" *ngIf="isLoadingSharedAlbum()">Cargando álbum compartido...</p>
+    <p class="shared-loading" *ngIf="isLoadingSharedAlbum()">
+      Cargando álbum compartido...
+    </p>
 
     <section class="shared-lists" *ngIf="!isLoadingSharedAlbum()">
       <article class="shared-list">
         <h2>Me faltan</h2>
-        <div class="shared-country-list" *ngIf="sharedMissingGroups().length; else noSharedMissing">
+        <div
+          class="shared-country-list"
+          *ngIf="sharedMissingGroups().length; else noSharedMissing"
+        >
           <div
             class="shared-country-row"
-            *ngFor="let group of sharedMissingGroups(); trackBy: trackStickerGroup"
+            *ngFor="
+              let group of sharedMissingGroups();
+              trackBy: trackStickerGroup
+            "
           >
             <strong>{{ group.label }}:</strong>
             <span>{{ group.numbers.join(", ") }}</span>
@@ -50,10 +61,16 @@
 
       <article class="shared-list">
         <h2>Repetidas</h2>
-        <div class="shared-country-list" *ngIf="sharedDuplicateGroups().length; else noSharedDuplicates">
+        <div
+          class="shared-country-list"
+          *ngIf="sharedDuplicateGroups().length; else noSharedDuplicates"
+        >
           <div
             class="shared-country-row"
-            *ngFor="let group of sharedDuplicateGroups(); trackBy: trackStickerGroup"
+            *ngFor="
+              let group of sharedDuplicateGroups();
+              trackBy: trackStickerGroup
+            "
           >
             <strong>{{ group.label }}:</strong>
             <span>{{ group.numbers.join(", ") }}</span>
@@ -67,356 +84,496 @@
   </section>
 
   <ng-template #privateAlbum>
-  <section class="login-panel" *ngIf="!currentUserId()">
-    <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
-    <div class="login-copy">
-      <h1>Gestiona tu álbum</h1>
-      <p class="subtitle">
-        Ingresa o regístrate con tu usuario para cargar tus barajitas.
-      </p>
-    </div>
-
-    <form class="login-form" (ngSubmit)="login()">
-      <label for="loginName">Usuario</label>
-      <input
-        id="loginName"
-        class="username-input"
-        name="loginName"
-        type="text"
-        [ngModel]="loginName()"
-        (ngModelChange)="loginName.set($event)"
-        autocomplete="username"
-        [disabled]="isLoggingIn()"
-      />
-
-      <label for="loginPassword">Contraseña</label>
-      <input
-        id="loginPassword"
-        name="loginPassword"
-        type="password"
-        [ngModel]="loginPassword()"
-        (ngModelChange)="loginPassword.set($event)"
-        autocomplete="current-password"
-        [disabled]="isLoggingIn()"
-      />
-
-      <button type="submit" [disabled]="isLoggingIn()">
-        <span class="spinner" *ngIf="isLoggingIn()" aria-hidden="true"></span>
-        {{ isLoggingIn() ? "Entrando" : "Entrar" }}
-      </button>
-      <p class="login-error" *ngIf="loginError()">{{ loginError() }}</p>
-    </form>
-  </section>
-
-  <ng-container *ngIf="currentUserId()">
-    <section class="hero">
-      <div class="topbar">
-        <h1>Mi álbum 2026</h1>
-        <div class="user-chip">
-          <span>{{ currentUserId() }}</span>
-          <button
-            type="button"
-            class="logout-icon-button"
-            aria-label="Copiar enlace para compartir"
-            title="Copiar enlace para compartir"
-            (click)="copyShareLink()"
-          >
-            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
-          </button>
-          <button
-            type="button"
-            class="logout-icon-button"
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-            (click)="logout()"
-          >
-            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-          </button>
-        </div>
+    <section class="login-panel" *ngIf="!currentUserId()">
+      <img class="login-logo" src="worldcup.png" alt="World Cup 2026" />
+      <div class="login-copy">
+        <h1>Gestiona tu álbum</h1>
+        <p class="subtitle">
+          Ingresa o regístrate con tu usuario para cargar tus barajitas.
+        </p>
       </div>
-      <p class="share-feedback" *ngIf="shareFeedback()">{{ shareFeedback() }}</p>
 
-      <div class="summary" aria-label="Resumen del álbum">
-        <div>
-          <strong>{{ ownedStickers().length }}/{{ stickers().length }}</strong>
-          <span>tengo</span>
-        </div>
-        <div>
-          <strong>{{ completedPercent() }}%</strong>
-          <span>completado</span>
-        </div>
-        <div>
-          <strong
-            >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</strong
-          >
-          <span>repetidas</span>
-        </div>
-      </div>
+      <form class="login-form" (ngSubmit)="login()">
+        <label for="loginName">Usuario</label>
+        <input
+          id="loginName"
+          class="username-input"
+          name="loginName"
+          type="text"
+          [ngModel]="loginName()"
+          (ngModelChange)="loginName.set($event)"
+          autocomplete="username"
+          [disabled]="isLoggingIn()"
+        />
+
+        <label for="loginPassword">Contraseña</label>
+        <input
+          id="loginPassword"
+          name="loginPassword"
+          type="password"
+          [ngModel]="loginPassword()"
+          (ngModelChange)="loginPassword.set($event)"
+          autocomplete="current-password"
+          [disabled]="isLoggingIn()"
+        />
+
+        <button type="submit" [disabled]="isLoggingIn()">
+          <span class="spinner" *ngIf="isLoggingIn()" aria-hidden="true"></span>
+          {{ isLoggingIn() ? "Entrando" : "Entrar" }}
+        </button>
+        <p class="login-error" *ngIf="loginError()">{{ loginError() }}</p>
+      </form>
     </section>
 
-    <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
-
-    <section class="dashboard">
-      <nav class="panel-tabs" aria-label="Vistas del álbum">
-        <button
-          type="button"
-          [class.active]="activePanel() === 'album'"
-          (click)="togglePanel('album')"
-        >
-          <strong>Mi álbum</strong>
-          <span>{{ sections().length }} grupos</span>
-        </button>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'missing'"
-          (click)="togglePanel('missing')"
-        >
-          <strong>Me faltan</strong>
-          <span>{{ missingStickers().length }} barajitas</span>
-        </button>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'duplicates'"
-          (click)="togglePanel('duplicates')"
-        >
-          <strong>Repetidas</strong>
-          <span
-            >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</span
-          >
-        </button>
-      </nav>
-
-      <article class="active-panel">
-        <ng-container *ngIf="activePanel() === 'album'">
-          <header class="active-panel-header">
-            <div>
-              <h2>Mi álbum</h2>
-              <p>
-                {{ sections().length }} grupos | {{ completedPercent() }}%
-                completado
-              </p>
-            </div>
-            <div class="legend">
-              <span class="dot status-owned"></span>Tengo
-              <span class="dot status-duplicate"></span>Repetida
-              <span class="dot status-missing"></span>Falta
-            </div>
-          </header>
-
-          <div
-            class="section-grid scroll-area"
-            aria-label="Números de barajitas por país o categoría"
-          >
-            <section
-              class="album-section"
-              *ngFor="let section of sections(); trackBy: trackSection"
+    <ng-container *ngIf="currentUserId()">
+      <section class="hero">
+        <div class="topbar">
+          <h1>Mi álbum 2026</h1>
+          <div class="user-chip">
+            <span>{{ currentUserId() }}</span>
+            <button
+              type="button"
+              class="logout-icon-button"
+              aria-label="Copiar enlace para compartir"
+              title="Copiar enlace para compartir"
+              (click)="copyShareLink()"
             >
-              <div class="section-title">
-                <strong>
-                  {{ section.name }}
-                  <span
-                    >- {{ section.owned }}/{{ section.stickers.length }}</span
-                  >
-                </strong>
+              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+            </button>
+            <button
+              type="button"
+              class="logout-icon-button"
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              (click)="logout()"
+            >
+              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <p class="share-feedback" *ngIf="shareFeedback()">
+          {{ shareFeedback() }}
+        </p>
+
+        <div class="summary" aria-label="Resumen del álbum">
+          <div>
+            <strong
+              >{{ ownedStickers().length }}/{{ stickers().length }}</strong
+            >
+            <span>tengo</span>
+          </div>
+          <div>
+            <strong>{{ completedPercent() }}%</strong>
+            <span>completado</span>
+          </div>
+          <div>
+            <strong
+              >{{ duplicateCopies() }} ({{
+                duplicateStickers().length
+              }})</strong
+            >
+            <span>repetidas</span>
+          </div>
+        </div>
+      </section>
+
+      <p class="app-error" *ngIf="loginError()">{{ loginError() }}</p>
+
+      <section class="dashboard">
+        <nav class="panel-tabs" aria-label="Vistas del álbum">
+          <button
+            type="button"
+            [class.active]="activePanel() === 'album'"
+            (click)="togglePanel('album')"
+          >
+            <strong>Mi álbum</strong>
+            <span>{{ sections().length }} grupos</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="activePanel() === 'missing'"
+            (click)="togglePanel('missing')"
+          >
+            <strong>Me faltan</strong>
+            <span>{{ missingStickers().length }} barajitas</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="activePanel() === 'duplicates'"
+            (click)="togglePanel('duplicates')"
+          >
+            <strong>Repetidas</strong>
+            <span
+              >{{ duplicateCopies() }} ({{ duplicateStickers().length }})</span
+            >
+          </button>
+          <button
+            type="button"
+            [class.active]="activePanel() === 'exchange'"
+            (click)="togglePanel('exchange')"
+          >
+            <strong>Cambio</strong>
+            <span>cruzar listas</span>
+          </button>
+        </nav>
+
+        <article class="active-panel">
+          <ng-container *ngIf="activePanel() === 'album'">
+            <header class="active-panel-header">
+              <div>
+                <h2>Mi álbum</h2>
+                <p>
+                  {{ sections().length }} grupos |
+                  {{ filteredAlbumStickers().length }} visibles |
+                  {{ completedPercent() }}% completado
+                </p>
               </div>
-
-              <div class="sticker-grid">
-                <button
-                  type="button"
-                  class="sticker-dot"
-                  *ngFor="
-                    let sticker of section.stickers;
-                    trackBy: trackStickerId
-                  "
-                  [class]="statusClass(sticker.status)"
-                  [attr.aria-label]="
-                    'Barajita ' +
-                    sticker.code +
-                    ' de ' +
-                    sticker.section +
-                    ': ' +
-                    statusLabels[sticker.status]
-                  "
-                  (click)="cycleStickerStatus(sticker)"
-                >
-                  {{ sticker.code }}
-                  <span
-                    class="sticker-count-badge"
-                    *ngIf="sticker.status === 'duplicate'"
-                    >x{{ sticker.duplicateCount }}</span
-                  >
-                  <span
-                    class="decrement-duplicate-badge"
-                    *ngIf="sticker.status === 'owned'"
-                    role="button"
-                    tabindex="0"
-                    title="Marcar como faltante"
-                    [attr.aria-label]="'Marcar como faltante ' + sticker.code"
-                    (click)="markStickerMissing(sticker, $event)"
-                    (keydown.enter)="markStickerMissing(sticker, $event)"
-                    (keydown.space)="
-                      $event.preventDefault();
-                      markStickerMissing(sticker, $event)
-                    "
-                  >
-                    <i class="fa-solid fa-minus" aria-hidden="true"></i>
-                  </span>
-                  <span
-                    class="decrement-duplicate-badge"
-                    *ngIf="sticker.status === 'duplicate'"
-                    role="button"
-                    tabindex="0"
-                    title="Restar repetida"
-                    [attr.aria-label]="'Restar repetida de ' + sticker.code"
-                    (click)="decrementDuplicate(sticker, $event)"
-                    (keydown.enter)="decrementDuplicate(sticker, $event)"
-                    (keydown.space)="
-                      $event.preventDefault();
-                      decrementDuplicate(sticker, $event)
-                    "
-                  >
-                    <i class="fa-solid fa-minus" aria-hidden="true"></i>
-                  </span>
-                </button>
+              <div class="legend">
+                <span class="dot status-owned"></span>Tengo
+                <span class="dot status-duplicate"></span>Repetida
+                <span class="dot status-missing"></span>Falta
               </div>
-            </section>
-          </div>
-        </ng-container>
+            </header>
 
-        <ng-container *ngIf="activePanel() === 'missing'">
-          <header class="active-panel-header">
-            <div>
-              <h2>Me faltan</h2>
-              <p>
-                {{ missingStickers().length }} barajitas |
-                {{ filteredMissingStickers().length }} visibles
-              </p>
+            <div class="search-actions album-search-actions">
+              <input
+                class="list-search"
+                type="search"
+                placeholder="Buscar barajita"
+                [ngModel]="albumQuery()"
+                (ngModelChange)="albumQuery.set($event)"
+                autocomplete="off"
+              />
             </div>
-          </header>
 
-          <div class="search-actions">
-            <input
-              class="list-search"
-              type="search"
-              placeholder="Buscar faltante"
-              [ngModel]="missingQuery()"
-              (ngModelChange)="missingQuery.set($event)"
-              autocomplete="off"
-            />
-            <button
-              type="button"
-              class="copy-list-button"
-              [disabled]="!missingStickers().length"
-              aria-label="Copiar barajitas faltantes"
-              title="Copiar barajitas faltantes"
-              (click)="copyStickerCodes('missing')"
-            >
-              <i class="fa-solid fa-download" aria-hidden="true"></i>
-            </button>
-          </div>
-          <p
-            class="copy-feedback"
-            *ngIf="copyFeedback() && activePanel() === 'missing'"
-          >
-            {{ copyFeedback() }}
-          </p>
-
-          <div
-            class="scroll-grid missing-dot-list"
-            *ngIf="filteredMissingStickers().length; else noMissing"
-          >
-            <button
-              type="button"
-              class="sticker-dot status-missing"
-              *ngFor="
-                let sticker of filteredMissingStickers();
-                trackBy: trackStickerId
-              "
-              [attr.aria-label]="
-                'Marcar como tengo ' + sticker.code + ' de ' + sticker.section
-              "
-              (click)="setStickerStatus(sticker, 'owned')"
-            >
-              {{ sticker.code }}
-            </button>
-          </div>
-          <ng-template #noMissing>
-            <p class="empty">No tienes faltantes.</p>
-          </ng-template>
-        </ng-container>
-
-        <ng-container *ngIf="activePanel() === 'duplicates'">
-          <header class="active-panel-header">
-            <div>
-              <h2>Repetidas</h2>
-              <p>{{ duplicateCopies() }} ({{ duplicateStickers().length }})</p>
-            </div>
-          </header>
-
-          <div class="search-actions">
-            <input
-              class="list-search"
-              type="search"
-              placeholder="Buscar repetida"
-              [ngModel]="duplicateQuery()"
-              (ngModelChange)="duplicateQuery.set($event)"
-              autocomplete="off"
-            />
-            <button
-              type="button"
-              class="copy-list-button"
-              [disabled]="!duplicateStickers().length"
-              aria-label="Copiar barajitas repetidas"
-              title="Copiar barajitas repetidas"
-              (click)="copyStickerCodes('duplicates')"
-            >
-              <i class="fa-solid fa-download" aria-hidden="true"></i>
-            </button>
-          </div>
-          <p
-            class="copy-feedback"
-            *ngIf="copyFeedback() && activePanel() === 'duplicates'"
-          >
-            {{ copyFeedback() }}
-          </p>
-
-          <div
-            class="scroll-grid duplicate-dot-list"
-            *ngIf="filteredDuplicateStickers().length; else noDuplicates"
-          >
             <div
-              class="duplicate-dot-item"
-              role="button"
-              tabindex="0"
-              *ngFor="
-                let sticker of filteredDuplicateStickers();
-                trackBy: trackStickerId
-              "
-              (click)="incrementDuplicate(sticker)"
-              (keydown.enter)="incrementDuplicate(sticker)"
+              class="section-grid scroll-area"
+              aria-label="Números de barajitas por país o categoría"
+              *ngIf="sections().length; else noAlbumResults"
             >
-              <span class="sticker-dot status-duplicate duplicate-sticker-dot">
-                {{ sticker.code }}
-                <span class="duplicate-count-badge"
-                  >x{{ sticker.duplicateCount }}</span
-                >
-              </span>
+              <section
+                class="album-section"
+                *ngFor="let section of sections(); trackBy: trackSection"
+              >
+                <div class="section-title">
+                  <strong>
+                    {{ section.name }}
+                    <span
+                      >- {{ section.owned }}/{{ section.stickers.length }}</span
+                    >
+                  </strong>
+                </div>
+
+                <div class="sticker-grid">
+                  <button
+                    type="button"
+                    class="sticker-dot"
+                    *ngFor="
+                      let sticker of section.stickers;
+                      trackBy: trackStickerId
+                    "
+                    [class]="statusClass(sticker.status)"
+                    [attr.aria-label]="
+                      'Barajita ' +
+                      sticker.code +
+                      ' de ' +
+                      sticker.section +
+                      ': ' +
+                      statusLabels[sticker.status]
+                    "
+                    (click)="cycleStickerStatus(sticker)"
+                  >
+                    {{ sticker.code }}
+                    <span
+                      class="sticker-count-badge"
+                      *ngIf="sticker.status === 'duplicate'"
+                      >x{{ sticker.duplicateCount }}</span
+                    >
+                    <span
+                      class="decrement-duplicate-badge"
+                      *ngIf="sticker.status === 'owned'"
+                      role="button"
+                      tabindex="0"
+                      title="Marcar como faltante"
+                      [attr.aria-label]="'Marcar como faltante ' + sticker.code"
+                      (click)="markStickerMissing(sticker, $event)"
+                      (keydown.enter)="markStickerMissing(sticker, $event)"
+                      (keydown.space)="
+                        $event.preventDefault();
+                        markStickerMissing(sticker, $event)
+                      "
+                    >
+                      <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                    </span>
+                    <span
+                      class="decrement-duplicate-badge"
+                      *ngIf="sticker.status === 'duplicate'"
+                      role="button"
+                      tabindex="0"
+                      title="Restar repetida"
+                      [attr.aria-label]="'Restar repetida de ' + sticker.code"
+                      (click)="decrementDuplicate(sticker, $event)"
+                      (keydown.enter)="decrementDuplicate(sticker, $event)"
+                      (keydown.space)="
+                        $event.preventDefault();
+                        decrementDuplicate(sticker, $event)
+                      "
+                    >
+                      <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                    </span>
+                  </button>
+                </div>
+              </section>
+            </div>
+            <ng-template #noAlbumResults>
+              <p class="empty">No hay barajitas con esa busqueda.</p>
+            </ng-template>
+          </ng-container>
+
+          <ng-container *ngIf="activePanel() === 'missing'">
+            <header class="active-panel-header">
+              <div>
+                <h2>Me faltan</h2>
+                <p>
+                  {{ missingStickers().length }} barajitas |
+                  {{ filteredMissingStickers().length }} visibles
+                </p>
+              </div>
+            </header>
+
+            <div class="search-actions">
+              <input
+                class="list-search"
+                type="search"
+                placeholder="Buscar faltante"
+                [ngModel]="missingQuery()"
+                (ngModelChange)="missingQuery.set($event)"
+                autocomplete="off"
+              />
               <button
                 type="button"
-                class="remove-duplicate-badge"
-                [attr.aria-label]="'Restar repetida ' + sticker.code"
-                (click)="decrementDuplicate(sticker, $event)"
+                class="copy-list-button"
+                [disabled]="!missingStickers().length"
+                aria-label="Copiar barajitas faltantes"
+                title="Copiar barajitas faltantes"
+                (click)="copyStickerCodes('missing')"
               >
-                <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
               </button>
             </div>
-          </div>
-          <ng-template #noDuplicates>
-            <p class="empty">No hay repetidas marcadas.</p>
-          </ng-template>
-        </ng-container>
-      </article>
-    </section>
-  </ng-container>
+            <p
+              class="copy-feedback"
+              *ngIf="copyFeedback() && activePanel() === 'missing'"
+            >
+              {{ copyFeedback() }}
+            </p>
+
+            <div
+              class="scroll-grid missing-dot-list"
+              *ngIf="filteredMissingStickers().length; else noMissing"
+            >
+              <button
+                type="button"
+                class="sticker-dot status-missing"
+                *ngFor="
+                  let sticker of filteredMissingStickers();
+                  trackBy: trackStickerId
+                "
+                [attr.aria-label]="
+                  'Marcar como tengo ' + sticker.code + ' de ' + sticker.section
+                "
+                (click)="setStickerStatus(sticker, 'owned')"
+              >
+                {{ sticker.code }}
+              </button>
+            </div>
+            <ng-template #noMissing>
+              <p class="empty">No tienes faltantes.</p>
+            </ng-template>
+          </ng-container>
+
+          <ng-container *ngIf="activePanel() === 'duplicates'">
+            <header class="active-panel-header">
+              <div>
+                <h2>Repetidas</h2>
+                <p>
+                  {{ duplicateCopies() }} ({{ duplicateStickers().length }})
+                </p>
+              </div>
+            </header>
+
+            <div class="search-actions">
+              <input
+                class="list-search"
+                type="search"
+                placeholder="Buscar repetida"
+                [ngModel]="duplicateQuery()"
+                (ngModelChange)="duplicateQuery.set($event)"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="copy-list-button"
+                [disabled]="!duplicateStickers().length"
+                aria-label="Copiar barajitas repetidas"
+                title="Copiar barajitas repetidas"
+                (click)="copyStickerCodes('duplicates')"
+              >
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p
+              class="copy-feedback"
+              *ngIf="copyFeedback() && activePanel() === 'duplicates'"
+            >
+              {{ copyFeedback() }}
+            </p>
+
+            <div
+              class="scroll-grid duplicate-dot-list"
+              *ngIf="filteredDuplicateStickers().length; else noDuplicates"
+            >
+              <div
+                class="duplicate-dot-item"
+                role="button"
+                tabindex="0"
+                *ngFor="
+                  let sticker of filteredDuplicateStickers();
+                  trackBy: trackStickerId
+                "
+                (click)="incrementDuplicate(sticker)"
+                (keydown.enter)="incrementDuplicate(sticker)"
+              >
+                <span
+                  class="sticker-dot status-duplicate duplicate-sticker-dot"
+                >
+                  {{ sticker.code }}
+                  <span class="duplicate-count-badge"
+                    >x{{ sticker.duplicateCount }}</span
+                  >
+                </span>
+                <button
+                  type="button"
+                  class="remove-duplicate-badge"
+                  [attr.aria-label]="'Restar repetida ' + sticker.code"
+                  (click)="decrementDuplicate(sticker, $event)"
+                >
+                  <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <ng-template #noDuplicates>
+              <p class="empty">No hay repetidas marcadas.</p>
+            </ng-template>
+          </ng-container>
+
+          <ng-container *ngIf="activePanel() === 'exchange'">
+            <header class="active-panel-header">
+              <div>
+                <h2>
+                  {{
+                    exchangeStep() === "review"
+                      ? "Cambio sugerido"
+                      : "Generar cambio"
+                  }}
+                </h2>
+                <p>
+                  {{
+                    exchangeStep() === "review"
+                      ? "Revisa el mensaje antes de aplicarlo."
+                      : "Cruza tus barajitas con la lista de otra persona."
+                  }}
+                </p>
+              </div>
+            </header>
+
+            <div
+              class="exchange-layout"
+              [class.exchange-review-layout]="exchangeStep() === 'review'"
+            >
+              <section class="exchange-form" *ngIf="exchangeStep() === 'form'">
+                <label for="exchangePartnerName">Nombre</label>
+                <input
+                  id="exchangePartnerName"
+                  class="list-search"
+                  type="text"
+                  placeholder="Con quien cambias"
+                  [ngModel]="exchangePartnerName()"
+                  (ngModelChange)="updateExchangePartnerName($event)"
+                  autocomplete="off"
+                />
+
+                <label for="exchangeSourceText">Lista recibida</label>
+                <textarea
+                  id="exchangeSourceText"
+                  class="exchange-textarea"
+                  placeholder="Pega aqui el texto de Figuritas App"
+                  [ngModel]="exchangeSourceText()"
+                  (ngModelChange)="updateExchangeSourceText($event)"
+                ></textarea>
+
+                <div class="exchange-actions">
+                  <button
+                    type="button"
+                    class="exchange-primary-button"
+                    (click)="generateExchangePreview()"
+                  >
+                    <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+                    <span>Generar cambio</span>
+                  </button>
+                </div>
+
+                <p class="copy-feedback" *ngIf="exchangeFeedback()">
+                  {{ exchangeFeedback() }}
+                </p>
+              </section>
+
+              <section
+                class="exchange-review"
+                *ngIf="exchangeStep() === 'review' && exchangeDraft()"
+              >
+                <div class="exchange-review-toolbar">
+                  <button
+                    type="button"
+                    class="exchange-primary-button"
+                    (click)="returnToExchangeForm()"
+                  >
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    <span>Volver</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="exchange-primary-button"
+                    [disabled]="!exchangeDraft()?.text"
+                    (click)="copyExchangeText()"
+                  >
+                    <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                    <span>Copiar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="exchange-primary-button"
+                    [disabled]="
+                      isApplyingExchange() ||
+                      !exchangeHasPreview() ||
+                      (!exchangeDraft()?.partnerGives?.length &&
+                        !exchangeDraft()?.userGives?.length)
+                    "
+                    (click)="applyExchange()"
+                  >
+                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                    <span>Guardar</span>
+                  </button>
+                </div>
+
+                <div class="exchange-preview">
+                  <pre>{{ exchangeDraft()?.text }}</pre>
+                </div>
+              </section>
+            </div>
+          </ng-container>
+        </article>
+      </section>
+    </ng-container>
   </ng-template>
 </main>

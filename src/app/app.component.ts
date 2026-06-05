@@ -7,14 +7,16 @@ import {
   collectionData,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  writeBatch
 } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
 import { environment } from '../environments/environment';
 import { ALBUM_CATALOG, StickerDefinition } from './album-catalog';
 
 type StickerStatus = 'missing' | 'owned' | 'duplicate';
-type PanelId = 'album' | 'missing' | 'duplicates';
+type PanelId = 'album' | 'missing' | 'duplicates' | 'exchange';
+type ExchangeStep = 'form' | 'review';
 
 interface Sticker {
   id: string;
@@ -41,6 +43,20 @@ interface StoredUser {
 interface StickerGroup {
   label: string;
   numbers: number[];
+}
+
+interface ParsedStickerList {
+  missingIds: Set<string>;
+  duplicateIds: Set<string>;
+  recognizedCount: number;
+}
+
+interface ExchangePreview {
+  partnerName: string;
+  partnerGives: Sticker[];
+  userGives: Sticker[];
+  parsedCount: number;
+  text: string;
 }
 
 const STATUS_LABELS: Record<StickerStatus, string> = {
@@ -123,11 +139,19 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly isLoggingIn = signal(false);
   readonly isSaving = signal(false);
   readonly isLoadingSharedAlbum = signal(false);
+  readonly albumQuery = signal('');
   readonly missingQuery = signal('');
   readonly duplicateQuery = signal('');
+  readonly exchangePartnerName = signal('');
+  readonly exchangeSourceText = signal('');
+  readonly exchangeFeedback = signal('');
+  readonly exchangeHasPreview = signal(false);
+  readonly exchangeDraft = signal<ExchangePreview | null>(null);
+  readonly exchangeStep = signal<ExchangeStep>('form');
   readonly copyFeedback = signal('');
   readonly shareFeedback = signal('');
   readonly activePanel = signal<PanelId>('album');
+  readonly isApplyingExchange = signal(false);
   readonly isSharedView = computed(() => !!this.sharedUserId());
 
   readonly stickers = signal<Sticker[]>(this.buildInitialStickers());
@@ -136,10 +160,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.stickers().filter((sticker) => sticker.status === 'missing')
   );
   readonly ownedStickers = computed(() =>
-    this.stickers().filter((sticker) => sticker.status === 'owned')
+    this.stickers().filter((sticker) => sticker.status !== 'missing')
   );
   readonly duplicateStickers = computed(() =>
     this.stickers().filter((sticker) => sticker.status === 'duplicate')
+  );
+  readonly filteredAlbumStickers = computed(() =>
+    this.filterStickers(this.stickers(), this.albumQuery())
   );
   readonly filteredMissingStickers = computed(() =>
     this.filterStickers(this.missingStickers(), this.missingQuery())
@@ -159,6 +186,9 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly formattedDuplicateList = computed(() =>
     this.formatStickerList('Repetidas', this.duplicateStickers())
   );
+  readonly exchangePreview = computed(() =>
+    this.buildExchangePreview(this.exchangePartnerName(), this.exchangeSourceText())
+  );
   readonly sharedMissingGroups = computed(() =>
     this.groupStickerRows(this.missingStickers(), false)
   );
@@ -168,7 +198,7 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly sections = computed(() => {
     const grouped = new Map<string, Sticker[]>();
 
-    for (const sticker of this.stickers()) {
+    for (const sticker of this.filteredAlbumStickers()) {
       const group = grouped.get(sticker.section) ?? [];
       group.push(sticker);
       grouped.set(sticker.section, group);
@@ -177,7 +207,7 @@ export class AppComponent implements OnInit, OnDestroy {
     return Array.from(grouped, ([name, stickers]) => ({
       name,
       stickers,
-      owned: stickers.filter((sticker) => sticker.status === 'owned').length,
+      owned: stickers.filter((sticker) => sticker.status !== 'missing').length,
       duplicate: stickers.filter((sticker) => sticker.status === 'duplicate').length,
       missing: stickers.filter((sticker) => sticker.status === 'missing').length
     }));
@@ -233,6 +263,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.currentUserId.set(userId);
     this.stickers.set(this.buildInitialStickers());
+    this.albumQuery.set('');
     this.missingQuery.set('');
     this.duplicateQuery.set('');
     this.copyFeedback.set('');
@@ -248,6 +279,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.loginPassword.set('');
     this.syncState.set(environment.firebase.enabled ? '' : 'Conexión sin configurar');
     this.stickers.set(this.buildInitialStickers());
+    this.albumQuery.set('');
   }
 
   async cycleStickerStatus(sticker: Sticker): Promise<void> {
@@ -333,6 +365,7 @@ export class AppComponent implements OnInit, OnDestroy {
   togglePanel(panel: PanelId): void {
     this.activePanel.set(panel);
     this.copyFeedback.set('');
+    this.exchangeFeedback.set('');
   }
 
   isCollapsed(panel: PanelId): boolean {
@@ -359,6 +392,160 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  updateExchangePartnerName(value: string): void {
+    this.exchangePartnerName.set(value);
+    this.exchangeHasPreview.set(false);
+    this.exchangeDraft.set(null);
+    this.exchangeStep.set('form');
+    this.exchangeFeedback.set('');
+  }
+
+  updateExchangeSourceText(value: string): void {
+    this.exchangeSourceText.set(value);
+    this.exchangeHasPreview.set(false);
+    this.exchangeDraft.set(null);
+    this.exchangeStep.set('form');
+    this.exchangeFeedback.set('');
+  }
+
+  returnToExchangeForm(): void {
+    this.exchangeStep.set('form');
+    this.exchangeFeedback.set('');
+  }
+
+  generateExchangePreview(): void {
+    const preview = this.exchangePreview();
+
+    if (!preview.partnerName) {
+      this.exchangeFeedback.set('Escribe el nombre de la persona.');
+      this.exchangeHasPreview.set(false);
+      return;
+    }
+
+    if (!this.exchangeSourceText().trim()) {
+      this.exchangeFeedback.set('Pega la lista que te enviaron.');
+      this.exchangeHasPreview.set(false);
+      return;
+    }
+
+    if (!preview.parsedCount) {
+      this.exchangeFeedback.set('No encontre barajitas validas en el texto pegado.');
+      this.exchangeHasPreview.set(false);
+      return;
+    }
+
+    this.exchangeHasPreview.set(true);
+    this.exchangeDraft.set(preview);
+    this.exchangeStep.set('review');
+    this.exchangeFeedback.set('');
+  }
+
+  async copyExchangeText(): Promise<void> {
+    const text = this.exchangeDraft()?.text ?? '';
+
+    if (!text) {
+      this.exchangeFeedback.set('Genera un cambio antes de copiar.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      this.exchangeFeedback.set('Cambio copiado al portapapeles.');
+    } catch (error) {
+      console.error(error);
+      this.exchangeFeedback.set('No se pudo copiar el cambio.');
+    }
+  }
+
+  async applyExchange(): Promise<void> {
+    const userId = this.currentUserId();
+    const preview = this.exchangeDraft();
+
+    if (!this.firestore || !userId) {
+      this.exchangeFeedback.set('Inicia sesion con Firebase configurado para guardar el cambio.');
+      return;
+    }
+
+    if (!this.exchangeHasPreview() || !preview) {
+      this.exchangeFeedback.set('Genera el cambio antes de guardarlo.');
+      return;
+    }
+
+    if (!preview.partnerGives.length && !preview.userGives.length) {
+      this.exchangeFeedback.set('No hay barajitas para guardar en este cambio.');
+      return;
+    }
+
+    const currentById = new Map(this.stickers().map((sticker) => [sticker.id, sticker]));
+    const nextById = new Map<string, Pick<Sticker, 'status' | 'duplicateCount'>>();
+
+    for (const sticker of preview.partnerGives) {
+      nextById.set(sticker.id, { status: 'owned', duplicateCount: 0 });
+    }
+
+    for (const sticker of preview.userGives) {
+      const currentSticker = currentById.get(sticker.id);
+
+      if (!currentSticker || currentSticker.status !== 'duplicate') {
+        continue;
+      }
+
+      const nextDuplicateCount = Math.max(currentSticker.duplicateCount - 1, 0);
+      nextById.set(sticker.id, {
+        status: nextDuplicateCount ? 'duplicate' : 'owned',
+        duplicateCount: nextDuplicateCount
+      });
+    }
+
+    if (!nextById.size) {
+      this.exchangeFeedback.set('No hay cambios aplicables en tu album.');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const batch = writeBatch(this.firestore);
+    const tradeRef = doc(collection(this.firestore, this.tradesPath(userId)));
+
+    for (const [stickerId, nextSticker] of nextById) {
+      batch.set(
+        doc(this.firestore, `${this.stickersPath(userId)}/${stickerId}`),
+        { ...nextSticker, updatedAt: now },
+        { merge: true }
+      );
+    }
+
+    batch.set(tradeRef, {
+      partnerName: preview.partnerName,
+      partnerGives: this.stickersForStorage(preview.partnerGives),
+      userGives: this.stickersForStorage(preview.userGives),
+      sourceText: this.exchangeSourceText(),
+      summaryText: preview.text,
+      createdAt: now
+    });
+
+    try {
+      this.isApplyingExchange.set(true);
+      await batch.commit();
+      this.stickers.update((stickers) =>
+        stickers.map((sticker) => {
+          const nextSticker = nextById.get(sticker.id);
+
+          return nextSticker ? { ...sticker, ...nextSticker, updatedAt: now } : sticker;
+        })
+      );
+      this.exchangeFeedback.set('Cambio guardado y album actualizado.');
+      this.syncState.set('Cambio guardado');
+      this.activePanel.set('album');
+      this.exchangeStep.set('form');
+    } catch (error) {
+      console.error(error);
+      this.exchangeFeedback.set(this.readableError(error));
+      this.syncState.set('No se pudo guardar el cambio');
+    } finally {
+      this.isApplyingExchange.set(false);
+    }
+  }
+
   async copyShareLink(): Promise<void> {
     const userId = this.currentUserId();
 
@@ -382,6 +569,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.stickersSubscription?.unsubscribe();
     this.sharedUserId.set('');
     this.stickers.set(this.buildInitialStickers());
+    this.albumQuery.set('');
     this.loginError.set('');
     this.syncState.set(environment.firebase.enabled ? '' : 'Firebase sin configurar');
     window.history.replaceState({}, '', window.location.pathname);
@@ -409,12 +597,180 @@ export class AppComponent implements OnInit, OnDestroy {
     return `${title}:\n\n${rows}`;
   }
 
-  private formatStickerRows(stickers: Sticker[], includeEmoji: boolean): string {
+  private formatStickerRows(stickers: Sticker[], includeEmoji: boolean, highlightNumberOne = false): string {
     return this.groupStickerRows(stickers, includeEmoji)
       .map((group) =>
-      `${group.label}: ${group.numbers.join(', ')}`
+      `${group.label}: ${group.numbers.map((number) => this.formatStickerNumber(number, highlightNumberOne)).join(', ')}`
       )
       .join('\n');
+  }
+
+  private formatStickerNumber(number: number, highlightNumberOne: boolean): string {
+    return highlightNumberOne && number === 1 ? '1 ⭐' : String(number);
+  }
+
+  private buildExchangePreview(partnerName: string, sourceText: string): ExchangePreview {
+    const normalizedPartnerName = partnerName.trim();
+    const parsedList = this.parseExternalStickerList(sourceText);
+    const partnerCandidates = this.missingStickers().filter((sticker) => parsedList.duplicateIds.has(sticker.id));
+    const userCandidates = this.duplicateStickers().filter((sticker) => parsedList.missingIds.has(sticker.id));
+    const { partnerGives, userGives } = this.balanceExchangeLists(partnerCandidates, userCandidates);
+    const titleName = normalizedPartnerName || 'la otra persona';
+    const partnerRows = this.formatStickerRows(partnerGives, true, true) || 'Nada por ahora';
+    const userRows = this.formatStickerRows(userGives, true, true) || 'Nada por ahora';
+    const text = normalizedPartnerName || partnerGives.length || userGives.length
+      ? `Cambio con ${titleName}\n\n${titleName} me da (${partnerGives.length}):\n${partnerRows}\n\nYo le doy (${userGives.length}):\n${userRows}`
+      : '';
+
+    return {
+      partnerName: normalizedPartnerName,
+      partnerGives,
+      userGives,
+      parsedCount: parsedList.recognizedCount,
+      text
+    };
+  }
+
+  private balanceExchangeLists(
+    partnerCandidates: Sticker[],
+    userCandidates: Sticker[]
+  ): Pick<ExchangePreview, 'partnerGives' | 'userGives'> {
+    const targetCount = Math.min(partnerCandidates.length, userCandidates.length);
+
+    if (!targetCount) {
+      return { partnerGives: [], userGives: [] };
+    }
+
+    const partnerOneCount = this.balancedStickerOneCount(partnerCandidates, userCandidates, targetCount);
+    const userOneCount = this.balancedStickerOneCount(userCandidates, partnerCandidates, targetCount);
+
+    return {
+      partnerGives: this.selectBalancedStickers(partnerCandidates, targetCount, partnerOneCount),
+      userGives: this.selectBalancedStickers(userCandidates, targetCount, userOneCount)
+    };
+  }
+
+  private balancedStickerOneCount(stickers: Sticker[], oppositeStickers: Sticker[], targetCount: number): number {
+    const oneCount = this.stickerOneCount(stickers);
+    const oppositeOneCount = this.stickerOneCount(oppositeStickers);
+    const otherCount = stickers.length - oneCount;
+    const preferredOneCount = Math.min(oneCount, oppositeOneCount, targetCount);
+    const requiredOneCount = Math.max(0, targetCount - otherCount);
+
+    return Math.min(Math.max(preferredOneCount, requiredOneCount), oneCount, targetCount);
+  }
+
+  private stickerOneCount(stickers: Sticker[]): number {
+    return stickers.filter((sticker) => sticker.number === 1).length;
+  }
+
+  private selectBalancedStickers(stickers: Sticker[], targetCount: number, oneCount: number): Sticker[] {
+    const otherCount = targetCount - oneCount;
+    let selectedOnes = 0;
+    let selectedOthers = 0;
+
+    return stickers.filter((sticker) => {
+      if (sticker.number === 1) {
+        if (selectedOnes >= oneCount) {
+          return false;
+        }
+
+        selectedOnes += 1;
+        return true;
+      }
+
+      if (selectedOthers >= otherCount) {
+        return false;
+      }
+
+      selectedOthers += 1;
+      return true;
+    });
+  }
+
+  private parseExternalStickerList(text: string): ParsedStickerList {
+    const missingIds = new Set<string>();
+    const duplicateIds = new Set<string>();
+    let currentList: 'missing' | 'duplicates' | '' = '';
+    let recognizedCount = 0;
+
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      const normalizedLine = line
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+      if (!line) {
+        continue;
+      }
+
+      if (normalizedLine === 'me faltan' || normalizedLine.startsWith('me faltan:')) {
+        currentList = 'missing';
+        continue;
+      }
+
+      if (normalizedLine === 'repetidas' || normalizedLine.startsWith('repetidas:')) {
+        currentList = 'duplicates';
+        continue;
+      }
+
+      if (!currentList || !line.includes(':')) {
+        continue;
+      }
+
+      const separatorIndex = line.indexOf(':');
+      const label = line.slice(0, separatorIndex);
+      const values = line.slice(separatorIndex + 1);
+      const teamCode = this.extractTeamCode(label);
+
+      if (!teamCode || !values) {
+        continue;
+      }
+
+      const numberMatches = values.replace(/\([^)]*\)/g, '').match(/\b\d{1,2}\b/g) ?? [];
+
+      for (const numberText of numberMatches) {
+        const sticker = this.findStickerByTeamAndNumber(teamCode, Number(numberText));
+
+        if (!sticker) {
+          continue;
+        }
+
+        if (currentList === 'missing') {
+          missingIds.add(sticker.id);
+        } else {
+          duplicateIds.add(sticker.id);
+        }
+
+        recognizedCount += 1;
+      }
+    }
+
+    return { missingIds, duplicateIds, recognizedCount };
+  }
+
+  private extractTeamCode(label: string): string {
+    const normalizedLabel = label.toUpperCase();
+
+    if (normalizedLabel.includes('CC-LAM')) {
+      return 'CC-LAM';
+    }
+
+    return normalizedLabel.match(/[A-Z]{3}/)?.[0] ?? '';
+  }
+
+  private findStickerByTeamAndNumber(teamCode: string, number: number): StickerDefinition | undefined {
+    return ALBUM_CATALOG.find((sticker) => sticker.teamCode === teamCode && sticker.number === number);
+  }
+
+  private stickersForStorage(stickers: Sticker[]): Array<Pick<Sticker, 'id' | 'code' | 'teamCode' | 'number'>> {
+    return stickers.map((sticker) => ({
+      id: sticker.id,
+      code: sticker.code,
+      teamCode: sticker.teamCode,
+      number: sticker.number
+    }));
   }
 
   private groupStickerRows(stickers: Sticker[], includeEmoji: boolean): StickerGroup[] {
@@ -548,6 +904,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private stickersPath(userId: string): string {
     return `users/${userId}/albums/${this.albumId}/stickers`;
+  }
+
+  private tradesPath(userId: string): string {
+    return `users/${userId}/albums/${this.albumId}/trades`;
   }
 
   private readSharedUserId(): string {

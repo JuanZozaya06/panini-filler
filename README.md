@@ -9,6 +9,7 @@ Aplicacion Angular para llevar el control de un album de barajitas.
 - Toque ciclico por barajita: `Falta`, `Tengo`, `Repetida`.
 - Listados automaticos de `Me faltan` y `Repetidas`.
 - Copia de listas agrupadas por seleccion, con numeros separados por coma.
+- Generador de cambios desde textos de Figuritas App, con guardado del intercambio y actualizacion del album.
 - Enlace compartible de solo lectura para que otra persona vea faltantes y repetidas sin iniciar sesion.
 - Persistencia en Firebase Firestore.
 
@@ -49,6 +50,14 @@ Cada documento usa esta forma:
   "updatedAt": "2026-05-09T00:00:00.000Z"
 }
 ```
+
+Los cambios confirmados se guardan en esta ruta:
+
+```text
+users/{userId}/albums/world-cup-2026/trades/{tradeId}
+```
+
+Cada cambio guarda el nombre de la persona, las barajitas recibidas, las entregadas, el texto original y el resumen generado.
 
 El enlace para compartir usa esta forma:
 
